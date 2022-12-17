@@ -370,20 +370,34 @@ bool PacketHook() {
 
 	// v403.1
 	ULONG_PTR uSendPacket = r.Scan(L"48 89 54 24 10 48 89 4C 24 08 56 57 48 81 EC ?? ?? ?? ?? 48 C7 84 24 28 02 00 00 FE FF FF FF 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 B0 02 00 00 E9");
-	// TWMS v246
+	// v410.2, TWMS v246, same aob
 	if (!uSendPacket) {
-		uSendPacket = r.Scan(L"48 89 54 24 10 48 89 4C 24 08 56 57 48 81 EC ?? ?? ?? ?? 48 C7 84 24 40 01 00 00 FE FF FF FF 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? E9");
+		uSendPacket = r.Scan(L"48 89 54 24 10 48 89 4C 24 08 56 57 48 81 EC ?? ?? ?? ?? 48 C7 84 24 ?? ?? ?? ?? FE FF FF FF 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? E9");
 	}
+	// v409.2 or before
 	ULONG_PTR uSendPacket_EH = r.Scan(L"48 89 4C 24 08 48 83 EC 28 E8 ?? ?? ?? ?? 48 8B 4C 24 30 8B 51 1C 48 8B C8 E8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 54 24 30 48 8B C8 E8 ?? ?? ?? ?? 48 83 C4 28 C3");
+	if (uSendPacket_EH) {
+		uSendPacket_EH_Ret = uSendPacket_EH + 0x30;
+	}
+	// v410.2
+	if (!uSendPacket_EH) {
+		uSendPacket_EH = r.Scan(L"48 89 4C 24 08 48 83 EC 38 E8 ?? ?? ?? ?? 48 8B 4C 24 40 8B 51 1C 48 8B C8 E8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 89 44 24 20 48 83 7C 24 20 00 74 0F 48 8B 54 24 40 48 8B 4C 24 20 E8 ?? ?? ?? ?? 48 83 C4 38 C3");
+		if (uSendPacket_EH) {
+			uSendPacket_EH_Ret = uSendPacket_EH + 0x3F; // offset changed
+		}
+	}
+	// add rsp,XX -> sub rsp,XX
+	bEnterSendPacket[3] = ((BYTE *)uSendPacket_EH_Ret)[3];
+
 	DEBUG(L"uSendPacket = " + QWORDtoString(uSendPacket));
 	DEBUG(L"uSendPacket_EH = " + QWORDtoString(uSendPacket_EH));
+	DEBUG(L"uSendPacket_EH_Ret = " + QWORDtoString(uSendPacket_EH_Ret));
+
 	ULONG_PTR uProcessPacket = r.Scan(L"48 89 54 24 10 48 89 4C 24 08 56 57 48 81 EC ?? ?? ?? ?? 48 C7 84 24 ?? ?? ?? ?? ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? E8 ?? ?? ?? ?? 0F B6 C0 85 C0 75 05 E9 ?? ?? ?? ?? E9");
 	DEBUG(L"uProcessPacket = " + QWORDtoString(uProcessPacket));
 
 	if (uSendPacket && uSendPacket_EH) {
-		uSendPacket_EH_Ret = uSendPacket_EH + 0x30;
-		DEBUG(L"uSendPacket_EH_Ret = " + QWORDtoString(uSendPacket_EH_Ret));
-		ULONG_PTR uCClientSocket = uSendPacket_EH + 0x1E;
+		ULONG_PTR uCClientSocket = uSendPacket_EH + 0x1E; // not changed v410.2
 		uCClientSocket += *(signed long int *)(uCClientSocket + 0x01) + 0x05;
 		_CClientSocket = (decltype(_CClientSocket))uCClientSocket;
 		DEBUG(L"uCClientSocket = " + QWORDtoString(uCClientSocket));
@@ -402,31 +416,55 @@ bool PacketHook() {
 		if (uCOutPacket) {
 			SHookFunction(COutPacket, uCOutPacket);
 			ULONG_PTR uEncode1 = r.Scan(L"48 89 5C 24 08 57 48 83 EC 20 48 8B F9 0F B6 DA 48 8D 4C 24 38 E8 ?? ?? ?? ?? 8B D0 48 8B CF E8 ?? ?? ?? ?? 8B 57 10 0F B6 CB 48 03 57 08 E8 ?? ?? ?? ?? 01 47 10 48 8B 5C 24 30 48 83 C4 20 5F C3");
+			// v410.2
+			if (!uEncode1) {
+				uEncode1 = r.Scan(L"48 89 5C 24 08 57 48 83 EC 20 48 8B D9 0F B6 FA 48 8D 4C 24 38 E8 ?? ?? ?? ?? 8B D0 48 8B CB E8 ?? ?? ?? ?? 48 8B 43 08 48 85 C0 75");
+			}
 			if (uEncode1) {
 				SHookFunction(Encode1, uEncode1);
 			}
 
 			ULONG_PTR uEncode2 = r.Scan(L"48 89 5C 24 08 57 48 83 EC 20 48 8B F9 0F B7 DA 48 8D 4C 24 38 E8 ?? ?? ?? ?? 8B D0 48 8B CF E8 ?? ?? ?? ?? 8B 57 10 0F B7 CB 48 03 57 08 E8 ?? ?? ?? ?? 01 47 10 48 8B 5C 24 30 48 83 C4 20 5F C3");
+			// v410.2
+			if (!uEncode2) {
+				uEncode2 = r.Scan(L"48 89 5C 24 08 57 48 83 EC 20 48 8B D9 0F B7 FA 48 8D 4C 24 38 E8 ?? ?? ?? ?? 8B D0 48 8B CB E8 ?? ?? ?? ?? 48 8B 43 08 48 85 C0 75");
+			}
 			if (uEncode2) {
 				SHookFunction(Encode2, uEncode2);
 			}
 
 			ULONG_PTR uEncode4 = r.Scan(L"48 89 5C 24 08 57 48 83 EC 20 48 8B F9 8B DA 48 8D 4C 24 38 E8 ?? ?? ?? ?? 8B D0 48 8B CF E8 ?? ?? ?? ?? 8B 57 10 8B CB 48 03 57 08 E8 ?? ?? ?? ?? 01 47 10 48 8B 5C 24 30 48 83 C4 20 5F C3");
+			// v410.2
+			if (!uEncode4) {
+				uEncode4 = r.Scan(L"48 89 5C 24 08 57 48 83 EC 20 48 8B D9 8B FA 48 8D 4C 24 38 E8 ?? ?? ?? ?? 8B D0 48 8B CB E8 ?? ?? ?? ?? 48 8B 43 08 48 85 C0 75");
+			}
 			if (uEncode4) {
 				SHookFunction(Encode4, uEncode4);
 			}
 
 			ULONG_PTR uEncode8 = r.Scan(L"48 89 5C 24 08 57 48 83 EC 20 48 8B F9 48 8B DA 48 8D 4C 24 38 E8 ?? ?? ?? ?? 8B D0 48 8B CF E8 ?? ?? ?? ?? 8B 57 10 48 8B CB 48 03 57 08 E8 ?? ?? ?? ?? 01 47 10 48 8B 5C 24 30 48 83 C4 20 5F C3");
+			// v410.2
+			if (!uEncode8) {
+				uEncode8 = r.Scan(L"48 89 5C 24 08 57 48 83 EC 20 48 8B D9 48 8B FA 48 8D 4C 24 38 E8 ?? ?? ?? ?? 8B D0 48 8B CB E8 ?? ?? ?? ?? 48 8B 43 08 48 85 C0 75");
+			}
 			if (uEncode8) {
 				SHookFunction(Encode8, uEncode8);
 			}
 
 			ULONG_PTR uEncodeStr = r.Scan(L"48 89 5C 24 08 57 48 83 EC 20 48 8B F9 48 8B DA 48 8B CA E8 ?? ?? ?? ?? 8B D0 48 8B CF E8 ?? ?? ?? ?? 8B 57 10 48 8B CB 48 03 57 08 E8 ?? ?? ?? ?? 01 47 10 48 8B 5C 24 30 48 83 C4 20 5F C3");
+			// v410.2
+			if (!uEncodeStr) {
+				uEncodeStr = r.Scan(L"48 89 5C 24 08 57 48 83 EC 20 48 8B D9 48 8B FA 48 8B CA E8 ?? ?? ?? ?? 8B D0 48 8B CB E8 ?? ?? ?? ?? 48 8B 43 08 48 85 C0 75");
+			}
 			if (uEncodeStr) {
 				SHookFunction(EncodeStr, uEncodeStr);
 			}
 
 			ULONG_PTR uEncodeBuffer = r.Scan(L"48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 20 48 8B DA 41 8B F0 41 8B D0 48 8B F9 E8 ?? ?? ?? ?? 8B 47 10 48 03 47 08 85 F6 7E 18 8B D6 0F 1F 00 0F B6 0B 48 8D 5B 01 88 08 48 8D 40 01 48 83 EA 01 75 ED 01 77 10 48 8B 74 24 38 48 8B 5C 24 30 48 83 C4 20 5F C3 CC CC CC CC CC CC CC CC CC CC 41 8B C1 48 03 41 08 45 85 C0 7E 17 45 8B C0 90 0F B6 0A 48 8D 52 01 88 08 48 8D 40 01 49 83 E8 01 75 ED C3");
+			// v410.2
+			if (!uEncodeBuffer) {
+				uEncodeBuffer = r.Scan(L"48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 20 48 8B DA 41 8B F0 41 8B D0 48 8B F9 E8 ?? ?? ?? ?? 48 8B 47 08 48 85 C0 75");
+			}
 			if (uEncodeBuffer) {
 				SHookFunction(EncodeBuffer, uEncodeBuffer);
 			}
