@@ -394,6 +394,10 @@ bool PacketHook() {
 	DEBUG(L"uSendPacket_EH_Ret = " + QWORDtoString(uSendPacket_EH_Ret));
 
 	ULONG_PTR uProcessPacket = r.Scan(L"48 89 54 24 10 48 89 4C 24 08 56 57 48 81 EC ?? ?? ?? ?? 48 C7 84 24 ?? ?? ?? ?? ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? E8 ?? ?? ?? ?? 0F B6 C0 85 C0 75 05 E9 ?? ?? ?? ?? E9");
+	// v410.2
+	if (!uProcessPacket) {
+		uProcessPacket = r.Scan(L"48 89 54 24 10 48 89 4C 24 08 48 81 EC ?? ?? ?? ?? 48 C7 84 24 ?? ?? ?? ?? FE FF FF FF 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? E8 ?? ?? ?? ?? 0F B6 C0 85 C0 75");
+	}
 	DEBUG(L"uProcessPacket = " + QWORDtoString(uProcessPacket));
 
 	if (uSendPacket && uSendPacket_EH) {
@@ -481,31 +485,55 @@ bool PacketHook() {
 	if (uProcessPacket) {
 		SHookFunction(ProcessPacket, uProcessPacket);
 		ULONG_PTR uDecode1 = r.Scan(L"48 89 4C 24 08 53 48 83 EC 40 48 C7 44 24 20 FE FF FF FF 48 8B D9 8B 51 1C 44 8B 41 10 44 2B C2 48 03 51 08 48 8D 4C 24 58 E8 ?? ?? ?? ?? 01 43 1C 0F B6 44 24 58 48 83 C4 40 5B C3");
+		// v410.2
+		if (!uDecode1) {
+			uDecode1 = r.Scan(L"48 89 4C 24 08 53 48 83 EC 40 48 C7 44 24 20 FE FF FF FF 48 8B D9 48 8B 41 08 48 85 C0 75 13 B9 A7 00 00 00 E8 ?? ?? ?? ?? 48 8B 43 08 48 85 C0 74 0B 83 78 FC 00 77 1A 48 85 C0 75 05 45 33 C0 EB 04 44 8B 40 FC 33 D2 B9 93 00 00 00 E8 ?? ?? ?? ?? 8B 53 1C 44 8B 43 10 44 2B C2 48 03 53 08 48 8D 4C 24 58 E8 ?? ?? ?? ?? 01 43 1C 0F B6 44 24 58 48 83 C4 40 5B C3");
+		}
 		if (uDecode1) {
 			SHookFunction(Decode1, uDecode1);
 		}
 
 		ULONG_PTR uDecode2 = r.Scan(L"48 89 4C 24 08 53 48 83 EC 40 48 C7 44 24 20 FE FF FF FF 48 8B D9 8B 51 1C 44 8B 41 10 44 2B C2 48 03 51 08 48 8D 4C 24 58 E8 ?? ?? ?? ?? 01 43 1C 0F B7 44 24 58 48 83 C4 40 5B C3");
+		// v410.2
+		if (!uDecode2) {
+			uDecode2 = r.Scan(L"48 89 4C 24 08 53 48 83 EC 40 48 C7 44 24 20 FE FF FF FF 48 8B D9 48 8B 41 08 48 85 C0 75 13 B9 A7 00 00 00 E8 ?? ?? ?? ?? 48 8B 43 08 48 85 C0 74 0B 83 78 FC 00 77 1A 48 85 C0 75 05 45 33 C0 EB 04 44 8B 40 FC 33 D2 B9 93 00 00 00 E8 ?? ?? ?? ?? 8B 53 1C 44 8B 43 10 44 2B C2 48 03 53 08 48 8D 4C 24 58 E8 ?? ?? ?? ?? 01 43 1C 0F B7 44 24 58 48 83 C4 40 5B C3");
+		}
 		if (uDecode2) {
 			SHookFunction(Decode2, uDecode2);
 		}
 
 		ULONG_PTR uDecode4 = r.Scan(L"48 89 4C 24 08 53 48 83 EC 40 48 C7 44 24 20 FE FF FF FF 48 8B D9 8B 51 1C 44 8B 41 10 44 2B C2 48 03 51 08 48 8D 4C 24 58 E8 ?? ?? ?? ?? 01 43 1C 8B 44 24 58 48 83 C4 40 5B C3");
+		// v410.2
+		if (!uDecode4) {
+			uDecode4 = r.Scan(L"48 89 4C 24 08 53 48 83 EC 40 48 C7 44 24 20 FE FF FF FF 48 8B D9 48 8B 41 08 48 85 C0 75 13 B9 A7 00 00 00 E8 ?? ?? ?? ?? 48 8B 43 08 48 85 C0 74 0B 83 78 FC 00 77 1A 48 85 C0 75 05 45 33 C0 EB 04 44 8B 40 FC 33 D2 B9 93 00 00 00 E8 ?? ?? ?? ?? 8B 53 1C 44 8B 43 10 44 2B C2 48 03 53 08 48 8D 4C 24 58 E8 ?? ?? ?? ?? 01 43 1C 8B 44 24 58 48 83 C4 40 5B C3");
+		}
 		if (uDecode4) {
 			SHookFunction(Decode4, uDecode4);
 		}
 
 		ULONG_PTR uDecode8 = r.Scan(L"48 89 4C 24 08 53 48 83 EC 40 48 C7 44 24 20 FE FF FF FF 48 8B D9 8B 51 1C 44 8B 41 10 44 2B C2 48 03 51 08 48 8D 4C 24 58 E8 ?? ?? ?? ?? 01 43 1C 48 8B 44 24 58 48 83 C4 40 5B C3");
+		// v410.2
+		if (!uDecode8) {
+			uDecode8 = r.Scan(L"48 89 4C 24 08 53 48 83 EC 40 48 C7 44 24 20 FE FF FF FF 48 8B D9 48 8B 41 08 48 85 C0 75 13 B9 A7 00 00 00 E8 ?? ?? ?? ?? 48 8B 43 08 48 85 C0 74 0B 83 78 FC 00 77 1A 48 85 C0 75 05 45 33 C0 EB 04 44 8B 40 FC 33 D2 B9 93 00 00 00 E8 ?? ?? ?? ?? 8B 53 1C 44 8B 43 10 44 2B C2 48 03 53 08 48 8D 4C 24 58 E8 ?? ?? ?? ?? 01 43 1C 48 8B 44 24 58 48 83 C4 40 5B C3");
+		}
 		if (uDecode8) {
 			SHookFunction(Decode8, uDecode8);
 		}
 
 		ULONG_PTR uDecodeStr = r.Scan(L"48 89 54 24 10 48 89 4C 24 08 57 48 83 EC 50 48 C7 44 24 28 FE FF FF FF 48 89 5C 24 70 48 8B FA 48 8B D9 33 C0 89 44 24 20 48 89 02 C7 44 24 20 01 00 00 00 8B 51 1C 44 8B 41 10 44 2B C2 48 03 51 08 48 8B CF E8 ?? ?? ?? ?? 01 43 1C 48 8B C7 48 8B 5C 24 70 48 83 C4 50 5F C3");
+		// v410.2
+		if (!uDecodeStr) {
+			uDecodeStr = r.Scan(L"48 8B C4 48 89 50 10 48 89 48 08 57 48 83 EC 50 48 C7 40 D0 FE FF FF FF 48 89 58 18 48 89 70 20 48 8B F2 48 8B D9 33 FF 89 78 C8 48 89 3A C7 40 C8 01 00 00 00 48 8B 41 08 48 85 C0 75 13 B9 A7 00 00 00 E8 ?? ?? ?? ?? 48 8B 43 08 48 85 C0 74 0E 83 78 FC 00 77 17 48 85 C0 74 03 8B 78 FC 44 8B C7 33 D2 B9 93 00 00 00 E8 ?? ?? ?? ?? 8B 53 1C 44 8B 43 10 44 2B C2 48 03 53 08 48 8B CE E8 ?? ?? ?? ?? 01 43 1C 48 8B C6 48 8B 5C 24 70 48 8B 74 24 78 48 83 C4 50 5F C3");
+		}
 		if (uDecodeStr) {
 			SHookFunction(DecodeStr, uDecodeStr);
 		}
 
 		ULONG_PTR uDecodeBuffer = r.Scan(L"48 89 4C 24 08 53 48 83 EC 40 48 C7 44 24 20 FE FF FF FF 41 8B C0 4C 8B D2 48 8B D9 44 8B 41 1C 44 8B 49 10 45 2B C8 4C 03 41 08 8B D0 49 8B CA E8 ?? ?? ?? ?? 01 43 1C 48 83 C4 40 5B C3");
+		// v410.2
+		if (!uDecodeBuffer) {
+			uDecodeBuffer = r.Scan(L"48 89 4C 24 08 57 48 83 EC 40 48 C7 44 24 20 FE FF FF FF 48 89 5C 24 58 48 89 74 24 60 41 8B F8 48 8B F2 48 8B D9 48 8B 41 08 48 85 C0 75 13 B9 A7 00 00 00 E8 ?? ?? ?? ?? 48 8B 43 08 48 85 C0 74 0B 83 78 FC 00 77 1A 48 85 C0 75 05 45 33 C0 EB 04 44 8B 40 FC 33 D2 B9 93 00 00 00 E8 ?? ?? ?? ?? 44 8B 43 1C 44 8B 4B 10 45 2B C8 4C 03 43 08 8B D7 48 8B CE E8 ?? ?? ?? ?? 01 43 1C 48 8B 5C 24 58 48 8B 74 24 60 48 83 C4 40 5F C3");
+		}
 		if (uDecodeBuffer) {
 			SHookFunction(DecodeBuffer, uDecodeBuffer);
 		}
