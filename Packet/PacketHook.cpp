@@ -5,6 +5,7 @@
 #include<intrin.h>
 #pragma intrinsic(_ReturnAddress)
 #include"../RirePE/RirePE.h"
+#include"AobList.h"
 
 PipeClient *pc = NULL;
 
@@ -39,7 +40,7 @@ bool ShiftJIStoUTF8(std::string sjis, std::wstring &utf16) {
 }
 
 // バイト配列からShiftJIS文字列を取得
-bool BYTEtoShiftJIS(BYTE *text, int len, std::string &sjis) {
+bool BYTEtoShiftJIS(BYTE *text, size_t len, std::string &sjis) {
 	std::vector<BYTE> b(len + 1);
 	for (size_t i = 0; i < len; i++) {
 		b[i] = text[i];
@@ -326,105 +327,77 @@ bool ScannerEnterSendPacket(ULONG_PTR uAddress) {
 	return true;
 }
 
+bool ListScan(Rosemary &r, ULONG_PTR &result, std::wstring aob[], size_t count, int &used) {
+	result = 0; // scan result
+	used = -1; // which aob is used
+	for (size_t i = 0; i < count; i++) {
+		result = r.Scan(aob[i]);
+		if (result) {
+			used = i;
+			return true;
+		}
+	}
+	return false;
+}
+
+#define HOOKDEBUG(func) \
+{\
+	ListScan(r, u##func, AOB_##func, _countof(AOB_##func), iWorkingAob);\
+	DEBUG(L""#func" = " + QWORDtoString(u##func) + L", Aob = " + std::to_wstring(iWorkingAob));\
+	SHookFunction(func, u##func);\
+}
 
 bool PacketHook() {
 	Rosemary r;
 
-	// v164.0 to v186.1
-	uSendPacket = r.Scan(L"B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 EC 10 53 56 8B F1 8D 9E 80 00 00 00 57 8B CB 89 5D F0 E8 ?? ?? ?? ?? 8B 46 0C 33 FF 3B C7");
-	if (!uSendPacket) {
-		// v302.0
-		uSendPacket = r.Scan(L"6A FF 68 ?? ?? ?? ?? 64 A1 00 00 00 00 50 83 EC 14 56 57 A1 ?? ?? ?? ?? 33 C4 50 8D 44 24 20 64 A3 00 00 00 00 8B F9 8D 87 84 00 00 00 50 8D 4C 24 10 E8");
-	}
-	SCANRES(uSendPacket);
-	ULONG_PTR uProcessPacket = r.Scan(L"B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 51 51 A1 ?? ?? ?? ?? 56 57 8B F9 8D 4D EC 89 45 F0 E8 ?? ?? ?? ?? 8B 75 08 83 65 FC 00 8B CE E8 ?? ?? ?? ?? 0F B7");
-	if (!uProcessPacket) {
-		// v302.0
-		uProcessPacket = r.Scan(L"6A FF 68 ?? ?? ?? ?? 64 A1 00 00 00 00 50 83 EC 08 53 56 57 A1 ?? ?? ?? ?? 33 C4 50 8D 44 24 18 64 A3 00 00 00 00 8B F9 8B 1D ?? ?? ?? ?? 89 5C 24 14 85 DB 74");
-	}
-	SCANRES(uProcessPacket);
+	//ULONG_PTR uSendPacket = 0;
+	ULONG_PTR uProcessPacket = 0;
+	ULONG_PTR uCOutPacket = 0;
+	ULONG_PTR uEncode1 = 0;
+	ULONG_PTR uEncode2 = 0;
+	ULONG_PTR uEncode4 = 0;
+	ULONG_PTR uEncodeStr = 0;
+	ULONG_PTR uEncodeBuffer = 0;
+	ULONG_PTR uDecode1 = 0;
+	ULONG_PTR uDecode2 = 0;
+	ULONG_PTR uDecode4 = 0;
+	ULONG_PTR uDecodeStr = 0;
+	ULONG_PTR uDecodeBuffer = 0;
+	//ULONG_PTR uEncode8 = 0;
+	//ULONG_PTR uDecode8 = 0;
+	int iWorkingAob = 0; // do not change name
+
+	HOOKDEBUG(SendPacket);
 
 	if (uSendPacket) {
-		SHookFunction(SendPacket, uSendPacket);
-		ULONG_PTR uCOutPacket = r.Scan(L"B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 51 51 56 8B F1 83 66 04 00 8D 45 F3 50 8D 4E 04 68 00 01 00 00 89 75 EC E8 ?? ?? ?? ?? FF 75 08 83 65 FC 00 8B CE E8");
-		SCANRES(uCOutPacket);
-		if (uCOutPacket) {
-			SHookFunction(COutPacket, uCOutPacket);
-			ULONG_PTR uEncode1 = r.Scan(L"56 8B F1 6A 01 E8 ?? ?? ?? ?? 8B 4E 08 8B 46 04 8A 54 24 08 88 14 08 FF 46 08 5E C2 04 00");
-			if (uEncode1) {
-				SHookFunction(Encode1, uEncode1);
-			}
-
-			ULONG_PTR uEncode2 = r.Scan(L"56 8B F1 6A 02 E8 ?? ?? ?? ?? 8B 4E 08 8B 46 04 66 8B 54 24 08 66 89 14 08 83 46 08 02 5E C2 04 00");
-			if (uEncode2) {
-				SHookFunction(Encode2, uEncode2);
-			}
-
-			ULONG_PTR uEncode4 = r.Scan(L"56 8B F1 6A 04 E8 ?? ?? ?? ?? 8B 4E 08 8B 46 04 8B 54 24 08 89 14 08 83 46 08 04 5E C2 04 00");
-			if (uEncode4) {
-				SHookFunction(Encode4, uEncode4);
-			}
-
-			ULONG_PTR uEncodeStr = r.Scan(L"B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 51 56 8B F1 8B 45 08 83 65 FC 00 85 C0 74 05 8B 40 FC EB 02 33 C0 83 C0 02 50 8B CE E8");
-			if (uEncodeStr) {
-				SHookFunction(EncodeStr, uEncodeStr);
-			}
-
-			ULONG_PTR uEncodeBuffer = r.Scan(L"56 57 8B 7C 24 10 8B F1 57 E8 ?? ?? ?? ?? 8B 46 04 03 46 08 57 FF 74 24 10 50 E8 ?? ?? ?? ?? 01 7E 08 83 C4 0C 5F 5E C2 08 00");
-			if (uEncodeBuffer) {
-				SHookFunction(EncodeBuffer, uEncodeBuffer);
-			}
-
-			SCANRES(uEncode1);
-			SCANRES(uEncode2);
-			SCANRES(uEncode4);
-			SCANRES(uEncodeStr);
-			SCANRES(uEncodeBuffer);
-		}
-	}
-
-	if (uProcessPacket) {
-		SHookFunction(ProcessPacket, uProcessPacket);
-		ULONG_PTR uDecode1 = r.Scan(L"B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 EC 14 0F B7 51 0C 8B 41 08 83 65 FC 00 53 56 8B 71 14 2B D6 57 03 C6 83 FA 01");
-		if (uDecode1) {
-			SHookFunction(Decode1, uDecode1);
-		}
-
-		ULONG_PTR uDecode2 = r.Scan(L"B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 EC 14 0F B7 51 0C 8B 41 08 83 65 FC 00 53 56 8B 71 14 2B D6 57 03 C6 83 FA 02");
-		if (uDecode2) {
-			SHookFunction(Decode2, uDecode2);
-		}
-
-		ULONG_PTR uDecode4 = r.Scan(L"B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 EC 14 0F B7 51 0C 8B 41 08 83 65 FC 00 53 56 8B 71 14 2B D6 57 03 C6 83 FA 04");
-		if (uDecode4) {
-			SHookFunction(Decode4, uDecode4);
-		}
-
-		ULONG_PTR uDecodeStr = r.Scan(L"B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 EC 18 53 56 57 89 65 F0 6A 01 33 FF 8B F1 5B");
-		if (uDecodeStr) {
-			SHookFunction(DecodeStr, uDecodeStr);
-		}
-
-		ULONG_PTR uDecodeBuffer = r.Scan(L"B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 EC 14 83 65 FC 00 53 56 8B F1 0F B7 46 0C");
-		if (uDecodeBuffer) {
-			SHookFunction(DecodeBuffer, uDecodeBuffer);
-		}
-
-		SCANRES(uDecode1);
-		SCANRES(uDecode2);
-		SCANRES(uDecode4);
-		SCANRES(uDecodeStr);
-		SCANRES(uDecodeBuffer);
-	}
-
-	if (uSendPacket) {
-		uEnterSendPacket = r.Scan(L"FF 74 24 04 8B 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? C3", ScannerEnterSendPacket);
+		uEnterSendPacket = r.Scan(AOB_EnterSendPacket[0], ScannerEnterSendPacket);
 		if (uEnterSendPacket) {
 			SHookFunction(EnterSendPacket, uEnterSendPacket);
 		}
 		SCANRES(uEnterSendPacket);
 		SCANRES(uEnterSendPacket_ret);
 		SCANRES(uCClientSocket);
+	}
+
+	if (uSendPacket) {
+		HOOKDEBUG(COutPacket);
+		HOOKDEBUG(Encode1);
+		HOOKDEBUG(Encode2);
+		HOOKDEBUG(Encode4);
+		//HOOKDEBUG(Encode8);
+		HOOKDEBUG(EncodeStr);
+		HOOKDEBUG(EncodeBuffer);
+	}
+
+	HOOKDEBUG(ProcessPacket);
+
+	if (uProcessPacket) {
+		HOOKDEBUG(Decode1);
+		HOOKDEBUG(Decode2);
+		HOOKDEBUG(Decode4);
+		//HOOKDEBUG(Decode8);
+		HOOKDEBUG(DecodeStr);
+		HOOKDEBUG(DecodeBuffer);
 	}
 
 	StartPipeClient();

@@ -153,6 +153,7 @@
     <ClCompile Include="PacketSender.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AobList.h" />
     <ClInclude Include="PacketHook.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
