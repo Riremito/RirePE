@@ -5,7 +5,7 @@
 #include<intrin.h>
 #pragma intrinsic(_ReturnAddress)
 #include"../RirePE/RirePE.h"
-#include"PacketRelatedAob.h"
+#include"../Packet/AobList.h"
 
 PipeClient *pc = NULL;
 CRITICAL_SECTION cs;

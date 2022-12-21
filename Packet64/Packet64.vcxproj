@@ -149,8 +149,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\Packet\AobList.h" />
     <ClInclude Include="PacketHook.h" />
-    <ClInclude Include="PacketRelatedAob.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Packet.cpp" />

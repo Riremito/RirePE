@@ -115,7 +115,7 @@ void AddSendPacket(OutPacket *p, DWORD addr, bool &bBlock) {
 	}
 
 	pem->header = SENDPACKET;
-	pem->id = packet_id_out;
+	pem->id = packet_id_out++;
 	pem->addr = addr;
 	pem->Binary.length = p->encoded;
 	memcpy_s(pem->Binary.packet, p->encoded, p->packet, p->encoded);
