@@ -150,12 +150,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\Packet\AobList.h" />
-    <ClInclude Include="PacketHook.h" />
+    <ClInclude Include="..\Packet\PacketHook.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Packet.cpp" />
-    <ClCompile Include="PacketHook.cpp" />
-    <ClCompile Include="PacketSender.cpp" />
+    <ClCompile Include="..\Packet\DllMain.cpp" />
+    <ClCompile Include="..\Packet\PacketHook.cpp" />
+    <ClCompile Include="..\Packet\PacketSender.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

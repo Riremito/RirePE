@@ -148,7 +148,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Packet.cpp" />
+    <ClCompile Include="DllMain.cpp" />
     <ClCompile Include="PacketHook.cpp" />
     <ClCompile Include="PacketSender.cpp" />
   </ItemGroup>
