@@ -18,6 +18,19 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\RirePE\ControlList.h" />
+    <ClInclude Include="..\RirePE\MainGUI.h" />
+    <ClInclude Include="..\RirePE\PacketLogger.h" />
+    <ClInclude Include="..\RirePE\PacketSender.h" />
+    <ClInclude Include="..\RirePE\RirePE.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\RirePE\MainGUI.cpp" />
+    <ClCompile Include="..\RirePE\PacketLogger.cpp" />
+    <ClCompile Include="..\RirePE\PacketSender.cpp" />
+    <ClCompile Include="..\RirePE\WinMain.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{62E49245-74FD-49C2-8E41-285F5FF2606D}</ProjectGuid>
@@ -142,15 +155,9 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
+      <UACExecutionLevel>AsInvoker</UACExecutionLevel>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="..\RirePE\RirePE.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\RirePE\RirePE.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
