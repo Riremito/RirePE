@@ -11,7 +11,7 @@ PipeClient *pc = NULL;
 CRITICAL_SECTION cs;
 
 bool StartPipeClient() {
-	pc = new PipeClient(L"PacketEditor");
+	pc = new PipeClient(PE_LOGGER_PIPE_NAME);
 	return pc->Run();
 }
 

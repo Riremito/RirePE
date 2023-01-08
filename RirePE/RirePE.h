@@ -3,6 +3,9 @@
 
 #include<Windows.h>
 
+#define PE_LOGGER_PIPE_NAME L"PacketLogger"
+#define PE_SENDER_PIPE_NAME L"PacketSender"
+
 #pragma pack(push, 1)
 enum MessageHeader {
 	SENDPACKET, // stop encoding
@@ -24,7 +27,8 @@ enum MessageHeader {
 	DECODEEND,
 	UNKNOWNDATA, // not decoded by function
 	NOTUSED, // recv not used
-	WHEREFROM // not encoded by function
+	WHEREFROM, // not encoded by function
+	UNKNOWN,
 };
 typedef struct {
 	MessageHeader header;
