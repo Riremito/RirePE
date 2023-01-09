@@ -130,7 +130,7 @@ bool PacketSender(Alice &a, MessageHeader type) {
 
 	memset(pcm, 0, sizeof(data_length));
 	pcm->header = type;
-	pcm->Binary.length = packet.size();
+	pcm->Binary.length = (DWORD)packet.size();
 	memcpy_s(&pcm->Binary.packet[0], packet.size(), &packet[0], packet.size());
 	pc.Send((BYTE *)pcm, data_length);
 

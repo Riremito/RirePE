@@ -32,21 +32,25 @@ enum MessageHeader {
 };
 typedef struct {
 	MessageHeader header;
-	ULONG_PTR id;
+	DWORD id;
+#ifdef _WIN64
 	ULONG_PTR addr;
+#else
+	ULONGLONG addr;
+#endif
 	union {
 		// SEND or RECV
 		struct {
-			ULONG_PTR length; // パケットのサイズ
+			DWORD length; // パケットのサイズ
 			BYTE packet[1]; // パケット
 		} Binary;
 		// Encode or Decode
 		struct {
-			ULONG_PTR pos; // Encode or Decodeされた位置
-			ULONG_PTR size; // サイズ
+			DWORD pos; // Encode or Decodeされた位置
+			DWORD size; // サイズ
 		} Extra;
 		// Encode or Decode 完了通知
-		ULONG_PTR status; // 状態
+		DWORD status; // 状態
 	};
 } PacketEditorMessage;
 #pragma pack(pop)

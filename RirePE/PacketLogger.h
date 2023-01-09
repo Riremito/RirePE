@@ -2,14 +2,14 @@
 #define __PACKETLOGGER_H__
 
 typedef struct {
-	ULONG_PTR addr;
+	ULONGLONG addr;
 	MessageHeader type;
 	ULONG_PTR pos;
 	ULONG_PTR size;
 } PacketFormat;
 
 typedef struct {
-	ULONG_PTR addr;
+	ULONGLONG addr;
 	ULONG_PTR id;
 	MessageHeader type;
 	std::vector<BYTE> packet;

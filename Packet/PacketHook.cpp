@@ -90,11 +90,11 @@ DWORD packet_id_out = 0;
 DWORD packet_id_in = 0;
 
 typedef struct {
-	ULONG_PTR id; // パケット識別子
-	ULONG_PTR addr; // リターンアドレス
+	DWORD id; // パケット識別子
+	ULONGLONG addr; // リターンアドレス
 	MessageHeader fmt; // フォーマットの種類
-	ULONG_PTR pos; // 場所
-	ULONG_PTR len; // データの長さ (DecodeBuffer以外不要)
+	DWORD pos; // 場所
+	DWORD len; // データの長さ (DecodeBuffer以外不要)
 
 } PacketExtraInformation;
 
@@ -518,7 +518,7 @@ bool ListScan(Rosemary &r, ULONG_PTR &result, std::wstring aob[], size_t count, 
 	for (size_t i = 0; i < count; i++) {
 		result = r.Scan(aob[i]);
 		if (result) {
-			used = i;
+			used = (int)i;
 			return true;
 		}
 	}

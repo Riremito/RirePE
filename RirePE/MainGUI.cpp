@@ -126,7 +126,7 @@ bool ShiftJIStoUTF8(std::string sjis, std::wstring &utf16) {
 }
 
 // バイト配列からShiftJIS文字列を取得
-bool BYTEtoShiftJIS(BYTE *text, int len, std::string &sjis) {
+bool BYTEtoShiftJIS(BYTE *text, size_t len, std::string &sjis) {
 	try {
 		std::vector<BYTE> b(len + 1);
 		for (size_t i = 0; i < len; i++) {
@@ -223,6 +223,13 @@ bool GetIntData(PacketData &pd, PacketFormat &pf, int &val) {
 	return false;
 }
 
+std::wstring GetAddress(ULONGLONG uAddr) {
+	if (uAddr & 0xFFFFFFFF00000000) {
+		return DWORDtoString((DWORD)(uAddr >> 32)) + DWORDtoString((DWORD)uAddr);
+	}
+	return DWORDtoString((DWORD)uAddr);
+}
+
 // format info
 bool SetExtraInfo(Alice &a, std::vector<PacketData>& vpd, DWORD id) {
 	bool show_return = a.CheckBoxStatus(CHECK_SHOW_RETURN);
@@ -235,7 +242,7 @@ bool SetExtraInfo(Alice &a, std::vector<PacketData>& vpd, DWORD id) {
 			wText += L"[Basic]\r\n";
 			wText += L"Status = " + GetPacketStatus(pd) + L"\r\n";
 			wText += L"Type = " + GetPacketType(pd) + L"\r\n";
-			wText += L"Return = " + QWORDtoString(pd.addr) + L"\r\n";
+			wText += L"Return = " + GetAddress(pd.addr) + L"\r\n";
 			wText += L"Length = " + std::to_wstring(pd.packet.size()) + L"\r\n";
 			wText += L"\r\n";
 			wText += L"[Format]\r\n";
@@ -253,7 +260,7 @@ bool SetExtraInfo(Alice &a, std::vector<PacketData>& vpd, DWORD id) {
 				wText += L"Type = " + GetFormatType(pf) + L"\r\n";
 				// Return Address
 				if (show_return) {
-					wText += L"Return = " + QWORDtoString(pf.addr) + L"\r\n";
+					wText += L"Return = " + GetAddress(pf.addr) + L"\r\n";
 				}
 				wText += L"Data = " + GetFormatData(pd, pf) + L"\r\n";
 				// 整数値

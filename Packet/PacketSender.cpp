@@ -56,7 +56,7 @@ VOID CALLBACK PacketInjector(HWND, UINT, UINT_PTR, DWORD) {
 		InPacket p = { 0x00, 0x02, &packet[0], (DWORD)packet.size(), wHeader, (DWORD)pcm->Binary.length, 0x04 };
 		ProcessPacket_Hook(_CClientSocket(), &p);
 #else
-		InPacket p = { 0x00, 0x02, &packet[0], (DWORD)packet.size(), 0x00, (DWORD)pcm->Binary.length, 0x00, 0x04 };
+		InPacket p = { 0x00, 0x02, &packet[0], (WORD)packet.size(), 0x00, (WORD)pcm->Binary.length, 0x00, 0x04 };
 		ProcessPacket_Hook((void *)GetCClientSocket(), 0, &p);
 #endif
 	}
