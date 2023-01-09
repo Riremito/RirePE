@@ -145,6 +145,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="FormatGUI.cpp" />
     <ClCompile Include="MainGUI.cpp" />
     <ClCompile Include="PacketLogger.cpp" />
     <ClCompile Include="PacketSender.cpp" />
@@ -152,6 +153,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ControlList.h" />
+    <ClInclude Include="FormatGUI.h" />
     <ClInclude Include="MainGUI.h" />
     <ClInclude Include="PacketLogger.h" />
     <ClInclude Include="PacketSender.h" />

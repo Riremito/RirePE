@@ -6,9 +6,10 @@
 #include"../RirePE/RirePE.h"
 #include"../RirePE/PacketLogger.h"
 #include"../RirePE/PacketSender.h"
+#include"../RirePE/FormatGUI.h"
 
 #define PE_WIDTH 800
-#define PE_HEIGHT 768
+#define PE_HEIGHT 600
 
 #define PE_DEBUG 1
 
