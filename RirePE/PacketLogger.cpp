@@ -59,7 +59,7 @@ bool AddFormat(PacketData &pd, PacketEditorMessage &pem) {
 	}
 
 	// パケットロック
-	if (pem.header == DECODEEND) {
+	if (pem.header == DECODE_END) {
 		pd.lock = TRUE;
 		if (pd.used < pd.packet.size()) {
 			PacketFormat unk;
@@ -191,17 +191,12 @@ bool LoggerCommunicate(PipeServerThread& psh) {
 			continue;
 		}
 
-		if (ENCODEHEADER <= pem.header && pem.header <= ENCODEBUFFER) {
+		if (ENCODE_BEGIN <= pem.header && pem.header <= ENCODE_END) {
 			AddSendPacket(pem);
 			continue;
 		}
 
-		if (DECODEHEADER <= pem.header && pem.header <= DECODEBUFFER) {
-			AddRecvPacket(pem);
-			continue;
-		}
-
-		if (pem.header == DECODEEND) {
+		if (DECODE_BEGIN <= pem.header && pem.header <= DECODE_END) {
 			AddRecvPacket(pem);
 			continue;
 		}

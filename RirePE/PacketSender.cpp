@@ -72,24 +72,27 @@ bool PacketSender(Alice &a, MessageHeader type) {
 
 	std::wstring wpacket = a.GetText((type == SENDPACKET) ? EDIT_PACKET_SEND : EDIT_PACKET_RECV);
 	std::wstring wpacket_fmt;
-	if (wpacket.length() < 5) {
-		return false;
+	int header_size = GetHeaderSize();
+
+	if (header_size) {
+		if (wpacket.length() < header_size * 2 +1) {
+			return false;
+		}
+
+		// header check
+		if (wpacket.find(L"@") != 0) {
+			return false;
+		}
+
+		// remove header tag (@)
+		wpacket.erase(wpacket.begin(), wpacket.begin() + 1);
 	}
 
-	// header check
-	if (wpacket.find(L"@") != 0) {
-		return false;
+	if (header_size == 0) {
+		header_size = 1;
 	}
-	wpacket.erase(wpacket.begin(), wpacket.begin() + 1);
-	std::wstring wHeader;
-	wHeader.push_back(wpacket.at(2));
-	wHeader.push_back(wpacket.at(3));
-	wHeader.push_back(wpacket.at(0));
-	wHeader.push_back(wpacket.at(1));
-	wpacket.erase(wpacket.begin(), wpacket.begin() + 4);
-	wpacket = wHeader + wpacket;
 
-
+	// remove space
 	for (size_t i = 0; i < wpacket.length(); i++) {
 		if (!CheckLetter(wpacket)) {
 			return false;
@@ -102,7 +105,7 @@ bool PacketSender(Alice &a, MessageHeader type) {
 		wpacket_fmt.push_back(wpacket.at(i));
 	}
 
-	if (wpacket_fmt.length() < 4) {
+	if (wpacket_fmt.length() < header_size * 2) {
 		return false;
 	}
 
@@ -110,9 +113,36 @@ bool PacketSender(Alice &a, MessageHeader type) {
 		return false;
 	}
 
+	std::wstring wHeader;
+
+	if (header_size == 2) {
+		wHeader.push_back(wpacket_fmt.at(2));
+		wHeader.push_back(wpacket_fmt.at(3));
+		wHeader.push_back(wpacket_fmt.at(0));
+		wHeader.push_back(wpacket_fmt.at(1));
+		wpacket_fmt.erase(wpacket_fmt.begin(), (wpacket_fmt.begin() + (header_size * 2)));
+		wpacket_fmt = wHeader + wpacket_fmt;
+	}
+	else if (header_size == 4) {
+		wHeader.push_back(wpacket.at(6));
+		wHeader.push_back(wpacket.at(7));
+		wHeader.push_back(wpacket.at(4));
+		wHeader.push_back(wpacket.at(5));
+		wHeader.push_back(wpacket.at(2));
+		wHeader.push_back(wpacket.at(3));
+		wHeader.push_back(wpacket.at(0));
+		wHeader.push_back(wpacket.at(1));
+		wpacket_fmt.erase(wpacket_fmt.begin(), (wpacket_fmt.begin() + (header_size * 2)));
+		wpacket_fmt = wHeader + wpacket_fmt;
+	}
+
 	std::vector<BYTE> packet;
 
 	if (!StringtoBYTE(wpacket_fmt, packet)) {
+		return false;
+	}
+
+	if (packet.size() < header_size) {
 		return false;
 	}
 

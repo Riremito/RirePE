@@ -384,7 +384,7 @@ void __fastcall ProcessPacket_Hook(void *pCClientSocket, void *edx, InPacket *p)
 		if (!bBlock) {
 			_ProcessPacket(pCClientSocket, p);
 		}
-		PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)0, DECODEEND, 0, 0 };
+		PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)0, DECODE_END, 0, 0 };
 		AddExtra(pxi);
 	}
 	else {

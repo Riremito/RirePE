@@ -1,5 +1,23 @@
 #include"../RirePE/MainGUI.h"
 
+int global_header_size = 2; // default, 0 = raw
+bool SetHeaderSize(Alice &a) {
+	std::wstring wText = a.GetText(EDIT_HEADER_SIZE);
+	int header_size = _wtoi(wText.c_str());
+
+	// BYTE or WORD or DWORD
+	if (header_size == 0 || header_size == 1 || header_size == 2 || header_size == 4) {
+		global_header_size = header_size;
+		return true;
+	}
+
+	return false;
+}
+
+int GetHeaderSize() {
+	return global_header_size;
+}
+
 // Ú‘±ó‘Ô
 void SetInfo(std::wstring wText) {
 	Alice &a = GetMainGUI();
@@ -31,16 +49,45 @@ bool UpdateLogger(PacketEditorMessage &pem, bool bBlock) {
 	a.ListView_AddItem(LISTVIEW_LOGGER, LV_TYPE, wType);
 	a.ListView_AddItem(LISTVIEW_LOGGER, LV_ID, std::to_wstring(pem.id));
 	a.ListView_AddItem(LISTVIEW_LOGGER, LV_LENGTH, std::to_wstring(pem.Binary.length));
-
 	std::wstring wpacket = DatatoString(pem.Binary.packet, (pem.Binary.length > 1024) ? 1024 : pem.Binary.length, true);
-	wpacket.erase(wpacket.begin(), wpacket.begin() + 5);
-	if (!bBlock) {
-		wpacket = L"@" + WORDtoString(*(WORD *)&pem.Binary.packet[0]) + wpacket;
+
+	int header_size = GetHeaderSize();
+	if (header_size <= pem.Binary.length) {
+		if (header_size) {
+			// remove header
+			wpacket.erase(wpacket.begin(), wpacket.begin() + (header_size * 2 + (header_size - 1))); // XX YY
+			// add header
+			std::wstring header_text = L"@";
+			if (header_size == 1) {
+				header_text += BYTEtoString(pem.Binary.packet[0]);
+			}
+			else if (header_size == 2) {
+				header_text += WORDtoString(*(WORD *)&pem.Binary.packet[0]);
+			}
+			else if (header_size == 4) {
+				header_text += DWORDtoString(*(DWORD *)&pem.Binary.packet[0]);
+			}
+
+			if (!bBlock) {
+				a.ListView_AddItem(LISTVIEW_LOGGER, LV_PACKET, header_text + wpacket);
+			}
+			else {
+				a.ListView_AddItem(LISTVIEW_LOGGER, LV_PACKET, header_text + L" (Blocked)" + wpacket);
+			}
+		}
+		// Raw
+		else {
+			if (!bBlock) {
+				a.ListView_AddItem(LISTVIEW_LOGGER, LV_PACKET, wpacket);
+			}
+			else {
+				a.ListView_AddItem(LISTVIEW_LOGGER, LV_PACKET, L"(Blocked) " + wpacket);
+			}
+		}
 	}
 	else {
-		wpacket = L"@" + WORDtoString(*(WORD *)&pem.Binary.packet[0]) + L" (Blocked)" + wpacket;
+		a.ListView_AddItem(LISTVIEW_LOGGER, LV_PACKET, L"(too short)" + wpacket);
 	}
-	a.ListView_AddItem(LISTVIEW_LOGGER, LV_PACKET, wpacket);
 	return true;
 }
 
@@ -75,9 +122,11 @@ bool OnCreate(Alice &a) {
 
 	a.StaticText(STATIC_INFO, L"Disconnected", 10, (PE_HEIGHT * 2 / 3 + 10));
 
-	a.Button(BUTTON_OPEN_FORMATVIEW, L"Format View", 180, (PE_HEIGHT * 2 / 3 + 10), 100);
-	a.Button(BUTTON_OPEN_FORMATVIEW2, L"Debug View", 300, (PE_HEIGHT * 2 / 3 + 10), 100);
-
+	a.Button(BUTTON_OPEN_FORMATVIEW, L"Format View", 100, (PE_HEIGHT * 2 / 3 + 10), 100);
+	a.StaticText(STATIC_HEADER_SIZE, L"Header Size:", 250, (PE_HEIGHT * 2 / 3 + 10));
+	a.EditBox(EDIT_HEADER_SIZE, 330, (PE_HEIGHT * 2 / 3 + 10), L"2", 50);
+	a.CheckBox(CHECK_HEADER_SIZE, L"Update", 390, (PE_HEIGHT * 2 / 3 + 10), BST_CHECKED);
+	a.ReadOnly(EDIT_HEADER_SIZE);
 
 	a.CheckBox(CHECK_SEND, L"Send", (PE_WIDTH - 100), (PE_HEIGHT * 2 / 3 + 10), BST_CHECKED);
 	a.CheckBox(CHECK_RECV, L"Recv", (PE_WIDTH - 50), (PE_HEIGHT * 2 / 3 + 10), BST_CHECKED);
@@ -116,9 +165,18 @@ bool OnCommand(Alice &a, int nIDDlgItem) {
 		return true;
 	}
 
+	// header size
+	if (nIDDlgItem == CHECK_HEADER_SIZE) {
+		bool read_only = a.CheckBoxStatus(nIDDlgItem);
+		if (read_only && !SetHeaderSize(a)) {
+			return true;
+		}
+		a.ReadOnly(EDIT_HEADER_SIZE, read_only);
+		return true;
+	}
 	// edit lock
 	if (nIDDlgItem == CHECK_LOCK) {
-		bool read_only = a.CheckBoxStatus(CHECK_LOCK);
+		bool read_only = a.CheckBoxStatus(nIDDlgItem);
 		a.ReadOnly(EDIT_PACKET_SEND, read_only);
 		a.ReadOnly(EDIT_PACKET_RECV, read_only);
 		return true;

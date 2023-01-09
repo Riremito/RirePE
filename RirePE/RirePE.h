@@ -10,13 +10,22 @@
 enum MessageHeader {
 	SENDPACKET, // stop encoding
 	RECVPACKET, // start decoding
-	ENCODEHEADER, // start encoding
+	// encode
+	ENCODE_BEGIN,
+	ENCODEHEADER,
 	ENCODE1,
 	ENCODE2,
 	ENCODE4,
 	ENCODE8,
 	ENCODESTR,
 	ENCODEBUFFER,
+	// TENVI
+	TENVI_ENCODE_HEADER_1,
+	TENVI_ENCODE_WSTR_1,
+	TENVI_ENCODE_WSTR_2,
+	ENCODE_END,
+	// decode
+	DECODE_BEGIN,
 	DECODEHEADER,
 	DECODE1,
 	DECODE2,
@@ -24,7 +33,12 @@ enum MessageHeader {
 	DECODE8,
 	DECODESTR,
 	DECODEBUFFER,
-	DECODEEND,
+	// TENVI
+	TENVI_DECODE_HEADER_1,
+	TENVI_DECODE_WSTR_1,
+	TENVI_DECODE_WSTR_2,
+	DECODE_END, // not a tag
+	// unknown
 	UNKNOWNDATA, // not decoded by function
 	NOTUSED, // recv not used
 	WHEREFROM, // not encoded by function

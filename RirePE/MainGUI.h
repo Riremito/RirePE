@@ -18,5 +18,6 @@ bool MainGUI(HINSTANCE hInstance);
 Alice& GetMainGUI();
 bool UpdateLogger(PacketEditorMessage &pem, bool bBlock);
 void SetInfo(std::wstring wText);
+int GetHeaderSize();
 
 #endif

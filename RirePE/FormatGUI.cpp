@@ -106,6 +106,8 @@ std::wstring GetFormatType(PacketFormat &pf) {
 	switch (pf.type) {
 	case ENCODEHEADER:
 	case DECODEHEADER:
+	case TENVI_ENCODE_HEADER_1:
+	case TENVI_DECODE_HEADER_1:
 	{
 		return L"HEADER";
 	}
@@ -138,6 +140,17 @@ std::wstring GetFormatType(PacketFormat &pf) {
 	case DECODEBUFFER:
 	{
 		return L"Buffer(" + std::to_wstring(pf.size) + L")";
+	}
+	// TENVI
+	case TENVI_ENCODE_WSTR_1:
+	case TENVI_DECODE_WSTR_1:
+	{
+		return L"WStr1(" + std::to_wstring((pf.size - sizeof(BYTE)) / 2) + L")";
+	}
+	case TENVI_ENCODE_WSTR_2:
+	case TENVI_DECODE_WSTR_2:
+	{
+		return L"WStr2(" + std::to_wstring((pf.size - sizeof(WORD)) / 2) + L")";
 	}
 	// エラー処理
 	case NOTUSED: {
@@ -235,6 +248,24 @@ std::wstring GetFormatData(PacketData &pd, PacketFormat &pf) {
 	case DECODEBUFFER:
 	{
 		return DatatoString(&pd.packet[pf.pos], pf.size);
+	}
+	// TENVI
+	case TENVI_ENCODE_HEADER_1:
+	case TENVI_DECODE_HEADER_1:
+	{
+		return L"@" + BYTEtoString(pd.packet[pf.pos]);
+	}
+	case TENVI_ENCODE_WSTR_1:
+	case TENVI_DECODE_WSTR_1:
+	{
+		std::wstring utf16 = std::wstring((WCHAR *)&pd.packet[pf.pos + sizeof(BYTE)], pd.packet[pf.pos]);
+		return L"L\"" + utf16 + L"\"";
+	}
+	case TENVI_ENCODE_WSTR_2:
+	case TENVI_DECODE_WSTR_2:
+	{
+		std::wstring utf16 = std::wstring((WCHAR *)&pd.packet[pf.pos + sizeof(WORD)], *(WORD *)&pd.packet[pf.pos]);
+		return L"L\"" + utf16 + L"\"";
 	}
 	// エラー処理
 	case NOTUSED:
@@ -346,6 +377,12 @@ bool SetExtraInfo(std::vector<PacketData>& vpd, DWORD id) {
 			wText += L"Type = " + GetPacketType(pd) + L"\r\n";
 			wText += L"Return = " + GetAddress(pd.addr) + L"\r\n";
 			wText += L"Length = " + std::to_wstring(pd.packet.size()) + L"\r\n";
+
+			if (pd.packet.size() == 0) {
+				global_fv->SetText(FV_EDIT_INFO, L"size is 0 ?");
+				return false;
+			}
+
 			wText += L"\r\n";
 			wText += L"[Format]\r\n";
 			int count = 0;
