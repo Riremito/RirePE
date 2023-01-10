@@ -11,7 +11,7 @@ PipeClient *pc = NULL;
 CRITICAL_SECTION cs;
 
 bool StartPipeClient() {
-	pc = new PipeClient(L"PacketEditor");
+	pc = new PipeClient(PE_LOGGER_PIPE_NAME);
 	return pc->Run();
 }
 
@@ -90,11 +90,11 @@ DWORD packet_id_out = 0;
 DWORD packet_id_in = 0;
 
 typedef struct {
-	ULONG_PTR id; // パケット識別子
-	ULONG_PTR addr; // リターンアドレス
+	DWORD id; // パケット識別子
+	ULONGLONG addr; // リターンアドレス
 	MessageHeader fmt; // フォーマットの種類
-	ULONG_PTR pos; // 場所
-	ULONG_PTR len; // データの長さ (DecodeBuffer以外不要)
+	DWORD pos; // 場所
+	DWORD len; // データの長さ (DecodeBuffer以外不要)
 
 } PacketExtraInformation;
 
@@ -384,7 +384,7 @@ void __fastcall ProcessPacket_Hook(void *pCClientSocket, void *edx, InPacket *p)
 		if (!bBlock) {
 			_ProcessPacket(pCClientSocket, p);
 		}
-		PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)0, DECODEEND, 0, 0 };
+		PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)0, DECODE_END, 0, 0 };
 		AddExtra(pxi);
 	}
 	else {
@@ -518,7 +518,7 @@ bool ListScan(Rosemary &r, ULONG_PTR &result, std::wstring aob[], size_t count, 
 	for (size_t i = 0; i < count; i++) {
 		result = r.Scan(aob[i]);
 		if (result) {
-			used = i;
+			used = (int)i;
 			return true;
 		}
 	}

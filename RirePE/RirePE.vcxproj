@@ -124,7 +124,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
+      <UACExecutionLevel>AsInvoker</UACExecutionLevel>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -145,9 +145,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="RirePE.cpp" />
+    <ClCompile Include="FilterGUI.cpp" />
+    <ClCompile Include="FormatGUI.cpp" />
+    <ClCompile Include="MainGUI.cpp" />
+    <ClCompile Include="PacketLogger.cpp" />
+    <ClCompile Include="PacketSender.cpp" />
+    <ClCompile Include="WinMain.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ControlList.h" />
+    <ClInclude Include="FilterGUI.h" />
+    <ClInclude Include="FormatGUI.h" />
+    <ClInclude Include="MainGUI.h" />
+    <ClInclude Include="PacketLogger.h" />
+    <ClInclude Include="PacketSender.h" />
     <ClInclude Include="RirePE.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
