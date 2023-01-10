@@ -323,6 +323,6 @@ bool OpenFilterGUI() {
 
 bool InitFilterGUI(HINSTANCE hInstance) {
 	hIGInstance = hInstance;
-	OpenFilterGUI();
+	//OpenFilterGUI();
 	return true;
 }
