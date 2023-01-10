@@ -25,13 +25,6 @@ bool FVOnCreate(Alice &fv) {
 	// status
 	fv.TextArea(FV_EDIT_INFO, 3, (FV_HEIGHT / 2), (FV_WIDTH - 6), (FV_HEIGHT / 2 - 6));
 	fv.ReadOnly(FV_EDIT_INFO);
-
-	//fv.CheckBox(FV_CHECK_SHOW_RETURN, L"Return", 3, (FV_HEIGHT / 2), BST_CHECKED);
-	//fv.CheckBox(FV_CHECK_SHOW_RAWDATA, L"Raw", 80, (FV_HEIGHT / 2), BST_UNCHECKED);
-	//fv.CheckBox(FV_CHECK_SHOW_INTDATA, L"Int", 130, (FV_HEIGHT / 2), BST_UNCHECKED);
-	//fv.TextArea(FV_EDIT_EXTRA, 3, (FV_HEIGHT / 2 + 20), (FV_WIDTH - 6), (FV_HEIGHT / 2 - 6 - 20));
-	//fv.SetText(FV_EDIT_EXTRA, L"Format View");
-	//fv.ReadOnly(FV_EDIT_EXTRA);
 	return true;
 }
 
@@ -74,7 +67,7 @@ bool OpenFormatGUI() {
 // start gui
 bool InitFormatGUI(HINSTANCE hInstance) {
 	hFVInstance = hInstance;
-	OpenFormatGUI();
+	//OpenFormatGUI();
 	return true;
 }
 

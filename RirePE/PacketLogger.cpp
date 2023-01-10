@@ -143,11 +143,6 @@ bool AddSendPacket(PacketEditorMessage &pem) {
 	packet_data_out.push_back(pd);
 	return true;
 }
-WORD HeaderStringToWORD(std::wstring wHeaderText) {
-	WORD wHeader = 0xFFFF;
-	swscanf_s(wHeaderText.c_str(), L"@%hX", &wHeader);
-	return wHeader;
-}
 
 // クライアントからのパケットの処理
 bool LoggerCommunicate(PipeServerThread& psh) {
@@ -158,35 +153,28 @@ bool LoggerCommunicate(PipeServerThread& psh) {
 	while (psh.Recv(data)) {
 		PacketEditorMessage &pem = (PacketEditorMessage&)data[0];
 
-		/*
-		if (pem.header == SENDPACKET && SearchHeaders(vBlockSendHeaders, *(WORD *)&pem.Binary.packet[0])) {
-			psh.Send(L"Block");
-			bBlock = true;
-		}
-		else if (pem.header == RECVPACKET && SearchHeaders(vBlockRecvHeaders, *(WORD *)&pem.Binary.packet[0])) {
-			psh.Send(L"Block");
-			bBlock = true;
-		}
-		else {
-			if (pem.header == SENDPACKET || pem.header == RECVPACKET) {
-				psh.Send(L"OK");
-			}
-			bBlock = false;
-		}
-		*/
-		if (pem.header == SENDPACKET || pem.header == RECVPACKET) {
-			psh.Send(L"OK");
-		}
 		bBlock = false;
 
 		if (pem.header == SENDPACKET) {
 			UpdateLogger(pem, bBlock);
+			if (bBlock) {
+				psh.Send(L"Block");
+			}
+			else {
+				psh.Send(L"OK");
+			}
 			AddSendPacket(pem);
 			continue;
 		}
 
 		if (pem.header == RECVPACKET) {
 			UpdateLogger(pem, bBlock);
+			if (bBlock) {
+				psh.Send(L"Block");
+			}
+			else {
+				psh.Send(L"OK");
+			}
 			AddRecvPacket(pem);
 			continue;
 		}

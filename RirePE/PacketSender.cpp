@@ -72,7 +72,7 @@ bool PacketSender(Alice &a, MessageHeader type) {
 
 	std::wstring wpacket = a.GetText((type == SENDPACKET) ? EDIT_PACKET_SEND : EDIT_PACKET_RECV);
 	std::wstring wpacket_fmt;
-	int header_size = GetHeaderSize();
+	size_t header_size = (size_t)GetHeaderSize();
 
 	if (header_size) {
 		if (wpacket.length() < header_size * 2 +1) {

@@ -25,8 +25,20 @@ void SetInfo(std::wstring wText) {
 }
 
 // ListView‚ÌXV
-bool UpdateLogger(PacketEditorMessage &pem, bool bBlock) {
+bool UpdateLogger(PacketEditorMessage &pem, bool &bBlock) {
 	if (pem.header != SENDPACKET && pem.header != RECVPACKET) {
+		return false;
+	}
+
+	bBlock = false;
+	FilterType ft = NORMAL_PACKET;
+	CheckFilter(pem, ft);
+
+	if (ft == BLOCK_PACKET) {
+		bBlock = true;
+	}
+
+	if (ft == IGNORE_PACKET) {
 		return false;
 	}
 
@@ -51,7 +63,7 @@ bool UpdateLogger(PacketEditorMessage &pem, bool bBlock) {
 	a.ListView_AddItem(LISTVIEW_LOGGER, LV_LENGTH, std::to_wstring(pem.Binary.length));
 	std::wstring wpacket = DatatoString(pem.Binary.packet, (pem.Binary.length > 1024) ? 1024 : pem.Binary.length, true);
 
-	int header_size = GetHeaderSize();
+	size_t header_size = (size_t)GetHeaderSize();
 	if (header_size <= pem.Binary.length) {
 		if (header_size) {
 			// remove header
@@ -127,6 +139,7 @@ bool OnCreate(Alice &a) {
 	a.EditBox(EDIT_HEADER_SIZE, 330, (PE_HEIGHT * 2 / 3 + 10), L"2", 50);
 	a.CheckBox(CHECK_HEADER_SIZE, L"Update", 390, (PE_HEIGHT * 2 / 3 + 10), BST_CHECKED);
 	a.ReadOnly(EDIT_HEADER_SIZE);
+	a.Button(BUTTON_OPEN_FILTER, L"Filter", 450, (PE_HEIGHT * 2 / 3 + 10), 100);
 
 	a.CheckBox(CHECK_SEND, L"Send", (PE_WIDTH - 100), (PE_HEIGHT * 2 / 3 + 10), BST_CHECKED);
 	a.CheckBox(CHECK_RECV, L"Recv", (PE_WIDTH - 50), (PE_HEIGHT * 2 / 3 + 10), BST_CHECKED);
@@ -187,6 +200,11 @@ bool OnCommand(Alice &a, int nIDDlgItem) {
 		return true;
 	}
 
+	if (nIDDlgItem == BUTTON_OPEN_FILTER) {
+		OpenFilterGUI();
+		return true;
+	}
+
 	return true;
 }
 
@@ -196,7 +214,6 @@ bool OnNotify(Alice &a, int nIDDlgItem) {
 		std::wstring text_type;
 		std::wstring text_id;
 		std::wstring text_packet;
-		std::wstring text_header;
 		bool check = true;
 
 		check &= a.ListView_Copy(LISTVIEW_LOGGER, LV_TYPE, text_type, false);
@@ -221,19 +238,16 @@ bool OnNotify(Alice &a, int nIDDlgItem) {
 			SetRawPacket(a, type, text_packet);
 		}
 
-		// format
-
-		text_header = text_packet;
-		text_header.erase(text_header.begin() + 5, text_header.end());
-
 		DWORD id = _wtoi(text_id.c_str());
 
 		if (text_type.compare(L"Send") == 0) {
 			SetExtraInfo(GetOutPacketFormat(), id);
+			SetFilterHeader(SENDPACKET, text_packet);
 			return true;
 		}
 		if (text_type.compare(L"Recv") == 0) {
 			SetExtraInfo(GetInPacketFormat(), id);
+			SetFilterHeader(RECVPACKET, text_packet);
 			return true;
 		}
 
@@ -282,6 +296,7 @@ bool MainGUI(HINSTANCE hInstance) {
 	a.SetCallback(ExitCallback, Alice::CT_CALL);
 	a.Run();
 	InitFormatGUI(hInstance); // no lock
+	InitFilterGUI(hInstance); // no lock
 	a.Wait(); // lock
 	return true;
 }

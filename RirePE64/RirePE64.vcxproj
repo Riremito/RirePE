@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\RirePE\ControlList.h" />
+    <ClInclude Include="..\RirePE\FilterGUI.h" />
     <ClInclude Include="..\RirePE\FormatGUI.h" />
     <ClInclude Include="..\RirePE\MainGUI.h" />
     <ClInclude Include="..\RirePE\PacketLogger.h" />
@@ -27,6 +28,7 @@
     <ClInclude Include="..\RirePE\RirePE.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\RirePE\FilterGUI.cpp" />
     <ClCompile Include="..\RirePE\FormatGUI.cpp" />
     <ClCompile Include="..\RirePE\MainGUI.cpp" />
     <ClCompile Include="..\RirePE\PacketLogger.cpp" />

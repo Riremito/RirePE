@@ -7,6 +7,7 @@
 #include"../RirePE/PacketLogger.h"
 #include"../RirePE/PacketSender.h"
 #include"../RirePE/FormatGUI.h"
+#include"../RirePE/FilterGUI.h"
 
 #define PE_WIDTH 800
 #define PE_HEIGHT 600
@@ -16,7 +17,7 @@
 
 bool MainGUI(HINSTANCE hInstance);
 Alice& GetMainGUI();
-bool UpdateLogger(PacketEditorMessage &pem, bool bBlock);
+bool UpdateLogger(PacketEditorMessage &pem, bool &bBlock);
 void SetInfo(std::wstring wText);
 int GetHeaderSize();
 
