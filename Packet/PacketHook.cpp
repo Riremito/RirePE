@@ -94,8 +94,8 @@ typedef struct {
 	ULONGLONG addr; // リターンアドレス
 	MessageHeader fmt; // フォーマットの種類
 	DWORD pos; // 場所
-	DWORD len; // データの長さ (DecodeBuffer以外不要)
-
+	DWORD size; // データの長さ
+	BYTE *data;
 } PacketExtraInformation;
 
 
@@ -106,7 +106,7 @@ void AddExtra(PacketExtraInformation &pxi) {
 		BYTE *b;
 	};
 
-	pem = new PacketEditorMessage;
+	b = new BYTE[sizeof(PacketEditorMessage) + pxi.size];
 
 	if (!pem) {
 		LeaveCriticalSection(&cs);
@@ -117,9 +117,17 @@ void AddExtra(PacketExtraInformation &pxi) {
 	pem->id = pxi.id;
 	pem->addr = pxi.addr;
 	pem->Extra.pos = pxi.pos;
-	pem->Extra.size = pxi.len;
+	pem->Extra.size = pxi.size;
 
-	if (!pc->Send(b, sizeof(PacketEditorMessage))) {
+	if (!pxi.data) {
+		pem->Extra.update = FORMAT_NO_UPDATE;
+	}
+	else {
+		pem->Extra.update = FORMAT_UPDATE;
+		memcpy_s(&pem->Extra.data[0], pxi.size, &pxi.data[0], pxi.size);
+	}
+
+	if (!pc->Send(b, sizeof(PacketEditorMessage) + pxi.size)) {
 		RestartPipeClient();
 	}
 
@@ -400,6 +408,9 @@ BYTE __fastcall Decode1_Hook(InPacket *p, void *edx) {
 	if (p->unk2 == 0x02) {
 		PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)_ReturnAddress(), DECODE1, p->decoded - 4, sizeof(BYTE) };
 		AddExtra(pxi);
+		// update
+		pxi.data = &p->packet[p->decoded];
+		AddExtra(pxi);
 	}
 	return _Decode1(p);
 }
@@ -413,9 +424,15 @@ WORD __fastcall Decode2_Hook(InPacket *p, void *edx) {
 		if (p->decoded == 4) {
 			PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)_ReturnAddress(), DECODEHEADER, p->decoded - 4, sizeof(WORD) };
 			AddExtra(pxi);
+			// update
+			pxi.data = &p->packet[p->decoded];
+			AddExtra(pxi);
 		}
 		else {
 			PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)_ReturnAddress(), DECODE2, p->decoded - 4, sizeof(WORD) };
+			AddExtra(pxi);
+			// update
+			pxi.data = &p->packet[p->decoded];
 			AddExtra(pxi);
 		}
 	}
@@ -430,6 +447,9 @@ DWORD __fastcall Decode4_Hook(InPacket *p, void *edx) {
 	if (p->unk2 == 0x02) {
 		PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)_ReturnAddress(), DECODE4, p->decoded - 4, sizeof(DWORD) };
 		AddExtra(pxi);
+		// update
+		pxi.data = &p->packet[p->decoded];
+		AddExtra(pxi);
 	}
 	return _Decode4(p);
 }
@@ -438,6 +458,9 @@ DWORD __fastcall Decode4_Hook(InPacket *p, void *edx) {
 ULONG_PTR Decode8_Hook(InPacket *p) {
 	if (p->unk2 == 0x02) {
 		PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)_ReturnAddress(), DECODE8, p->decoded - 4, sizeof(ULONG_PTR) };
+		AddExtra(pxi);
+		// update
+		pxi.data = &p->packet[p->decoded];
 		AddExtra(pxi);
 	}
 	return _Decode8(p);
@@ -452,6 +475,9 @@ char** __fastcall DecodeStr_Hook(InPacket *p, void *edx, char **s) {
 	if (p->unk2 == 0x02) {
 		PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)_ReturnAddress(), DECODESTR, p->decoded - 4, sizeof(WORD) + *(WORD *)&p->packet[p->decoded] };
 		AddExtra(pxi);
+		// update
+		pxi.data = &p->packet[p->decoded];
+		AddExtra(pxi);
 	}
 	return _DecodeStr(p, s);
 }
@@ -463,6 +489,9 @@ void __fastcall DecodeBuffer_Hook(InPacket *p, void *edx, BYTE *b, DWORD len) {
 #endif
 	if (p->unk2 == 0x02) {
 		PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)_ReturnAddress(), DECODEBUFFER, p->decoded - 4, len };
+		AddExtra(pxi);
+		// update
+		pxi.data = &p->packet[p->decoded];
 		AddExtra(pxi);
 	}
 	return _DecodeBuffer(p, b, len);

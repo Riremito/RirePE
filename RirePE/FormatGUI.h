@@ -15,6 +15,7 @@ enum FVListViewIndex {
 	FV_LV_POSITION,
 	FV_LV_TYPE,
 	FV_LV_SIZE,
+	FV_LV_MODIFIED,
 	FV_LV_DATA,
 	FV_LV_DATA_INT,
 };

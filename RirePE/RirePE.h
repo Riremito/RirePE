@@ -7,6 +7,7 @@
 #define PE_SENDER_PIPE_NAME L"PacketSender"
 
 #pragma pack(push, 1)
+
 enum MessageHeader {
 	SENDPACKET, // stop encoding
 	RECVPACKET, // start decoding
@@ -44,6 +45,12 @@ enum MessageHeader {
 	WHEREFROM, // not encoded by function
 	UNKNOWN,
 };
+
+enum FormatUpdate {
+	FORMAT_NO_UPDATE,
+	FORMAT_UPDATE,
+};
+
 typedef struct {
 	MessageHeader header;
 	DWORD id;
@@ -62,6 +69,8 @@ typedef struct {
 		struct {
 			DWORD pos; // Encode or Decodeされた位置
 			DWORD size; // サイズ
+			FormatUpdate update;
+			BYTE data[1]; // packet buffer sometimes changed before reading it
 		} Extra;
 		// Encode or Decode 完了通知
 		DWORD status; // 状態

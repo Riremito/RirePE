@@ -20,6 +20,26 @@ bool AddFormat(PacketData &pd, PacketEditorMessage &pem) {
 	if (pd.lock) {
 		return false;
 	}
+
+	// パケットの復号検出
+	if (pem.Extra.update == FORMAT_UPDATE) {
+		if (pem.Extra.pos + pem.Extra.size <= pd.packet.size()) {
+			for (auto &pf : pd.format) {
+				if (pf.pos == pem.Extra.pos && pf.size == pem.Extra.size) {
+					for (DWORD i = 0; i < pem.Extra.size; i++) {
+						if (pd.packet[pem.Extra.pos + i] != pem.Extra.data[i]) {
+							pf.modified = true;
+							memcpy_s(&pd.packet[pem.Extra.pos], pem.Extra.size, &pem.Extra.data[0], pem.Extra.size);
+							return true;
+						}
+					}
+					return false;
+				}
+			}
+		}
+		return false;
+	}
+
 	// パケットを登録
 	if (pem.header == SENDPACKET || pem.header == RECVPACKET) {
 		pd.packet.resize(pem.Binary.length);
@@ -40,7 +60,7 @@ bool AddFormat(PacketData &pd, PacketEditorMessage &pem) {
 
 			// 末尾に謎データがある場合
 			if (pd.used < pd.packet.size()) {
-				PacketFormat unk;
+				PacketFormat unk = {};
 				unk.type = WHEREFROM;
 				unk.pos = pd.used;
 				unk.size = pd.packet.size() - pd.used;
@@ -51,9 +71,6 @@ bool AddFormat(PacketData &pd, PacketEditorMessage &pem) {
 			else {
 				pd.status = 1;
 			}
-
-			// ログインパケットのパスワードを消す
-			//RemovePassword(pd);
 		}
 		return true;
 	}
@@ -62,7 +79,7 @@ bool AddFormat(PacketData &pd, PacketEditorMessage &pem) {
 	if (pem.header == DECODE_END) {
 		pd.lock = TRUE;
 		if (pd.used < pd.packet.size()) {
-			PacketFormat unk;
+			PacketFormat unk = {};
 			unk.type = NOTUSED;
 			unk.pos = pd.used;
 			unk.size = pd.packet.size() - pd.used;
@@ -75,7 +92,7 @@ bool AddFormat(PacketData &pd, PacketEditorMessage &pem) {
 
 	// 正常にdecode or encode出来ていない場合は穴埋めする
 	if (pd.used < pem.Extra.pos) {
-		PacketFormat unk;
+		PacketFormat unk = {};
 		unk.type = UNKNOWNDATA;
 		unk.pos = pd.used;
 		unk.size = pem.Extra.pos - pd.used;
@@ -87,7 +104,7 @@ bool AddFormat(PacketData &pd, PacketEditorMessage &pem) {
 	}
 
 	// フォーマットを登録
-	PacketFormat pf;
+	PacketFormat pf = {};
 	pf.type = pem.header;
 	pf.pos = pem.Extra.pos;
 	pf.size = pem.Extra.size;
@@ -103,6 +120,7 @@ bool AddFormat(PacketData &pd, PacketEditorMessage &pem) {
 			pd.status = 1;
 		}
 	}
+
 	return true;
 }
 
