@@ -182,6 +182,7 @@ bool LoggerCommunicate(PipeServerThread& psh) {
 				psh.Send(L"OK");
 			}
 			AddSendPacket(pem);
+			UpdateStatus(pem);
 			continue;
 		}
 
@@ -204,6 +205,10 @@ bool LoggerCommunicate(PipeServerThread& psh) {
 
 		if (DECODE_BEGIN <= pem.header && pem.header <= DECODE_END) {
 			AddRecvPacket(pem);
+
+			if(pem.header == DECODE_END) {
+				UpdateStatus(pem);
+			}
 			continue;
 		}
 	}

@@ -25,6 +25,8 @@ enum ListViewIndex {
 	LV_TYPE,
 	LV_ID,
 	LV_LENGTH,
+	LV_STATUS,
+	LV_PACKET_FORMAT,
 	LV_PACKET,
 };
 

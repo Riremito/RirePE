@@ -86,8 +86,8 @@ char** (__thiscall *_DecodeStr)(InPacket *p, char **s);
 void(__thiscall *_DecodeBuffer)(InPacket *p, BYTE *b, DWORD len);
 #endif
 
-DWORD packet_id_out = 0;
-DWORD packet_id_in = 0;
+DWORD packet_id_out = 0; // 偶数
+DWORD packet_id_in = 1; // 奇数
 
 typedef struct {
 	DWORD id; // パケット識別子
@@ -150,10 +150,11 @@ void AddSendPacket(OutPacket *p, ULONG_PTR addr, bool &bBlock) {
 	}
 
 	pem->header = SENDPACKET;
-	pem->id = packet_id_out++; // ???
+	pem->id = packet_id_out;
 	pem->addr = addr;
 	pem->Binary.length = p->encoded;
 	memcpy_s(pem->Binary.packet, p->encoded, p->packet, p->encoded);
+	packet_id_out += 2;
 
 #ifdef _WIN64
 	if (p->header) {
@@ -306,7 +307,6 @@ void COutPacket_Hook(OutPacket *p, WORD w) {
 #else
 void __fastcall  COutPacket_Hook(OutPacket *p, void *edx, WORD w) {
 #endif
-	packet_id_out++;
 	PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODEHEADER, 0, sizeof(WORD) };
 	AddExtra(pxi);
 	return _COutPacket(p, w);
@@ -386,7 +386,7 @@ void ProcessPacket_Hook(void *pCClientSocket, InPacket *p) {
 void __fastcall ProcessPacket_Hook(void *pCClientSocket, void *edx, InPacket *p) {
 #endif
 	if (p->unk2 == 0x02) {
-		packet_id_in++;
+		packet_id_in += 2;
 		bool bBlock = false;
 		AddRecvPacket(p, (ULONG_PTR)_ReturnAddress(), bBlock);
 		if (!bBlock) {

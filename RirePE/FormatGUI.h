@@ -25,5 +25,6 @@ bool OpenFormatGUI();
 HWND FVGet();
 bool UpdateFV(PacketData &pd);
 bool SetExtraInfo(std::vector<PacketData>& vpd, DWORD id);
+std::wstring GetFormatData(PacketData &pd, PacketFormat &pf);
 
 #endif

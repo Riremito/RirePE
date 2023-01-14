@@ -16,11 +16,11 @@ HWND FVGet() {
 bool FVOnCreate(Alice &fv) {
 	fv.ListView(FV_LISTVIEW_FORMAT, 3, 3, (FV_WIDTH - 6), (FV_HEIGHT / 2 - 6));
 	fv.ListView_AddHeader(FV_LISTVIEW_FORMAT, L"Index", 50);
-	fv.ListView_AddHeader(FV_LISTVIEW_FORMAT, L"Return", 100);
+	fv.ListView_AddHeader(FV_LISTVIEW_FORMAT, L"Return", 120);
 	fv.ListView_AddHeader(FV_LISTVIEW_FORMAT, L"Pos", 40);
 	fv.ListView_AddHeader(FV_LISTVIEW_FORMAT, L"Type", 80);
 	fv.ListView_AddHeader(FV_LISTVIEW_FORMAT, L"Size", 40);
-	fv.ListView_AddHeader(FV_LISTVIEW_FORMAT, L"Encryption", 80);
+	fv.ListView_AddHeader(FV_LISTVIEW_FORMAT, L"Enc", 60);
 	fv.ListView_AddHeader(FV_LISTVIEW_FORMAT, L"Data", 300);
 	fv.ListView_AddHeader(FV_LISTVIEW_FORMAT, L"Int", 80);
 	// status
