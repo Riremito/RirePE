@@ -523,6 +523,7 @@ ULONG_PTR GetCClientSocket() {
 }
 
 // FF 74 24 04 8B 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? C3
+// 8B 44 24 04 8B 0D ?? ?? ?? ?? 50 E8 ?? ?? ?? ?? C3, v188
 bool ScannerEnterSendPacket(ULONG_PTR uAddress) {
 	if (!uSendPacket) {
 		return false;
@@ -536,6 +537,23 @@ bool ScannerEnterSendPacket(ULONG_PTR uAddress) {
 
 	uEnterSendPacket = uAddress;
 	uEnterSendPacket_ret = uEnterSendPacket + 0x0F;
+	uCClientSocket = *(ULONG_PTR *)(uAddress + 0x06);
+	return true;
+}
+
+bool ScannerEnterSendPacket_188(ULONG_PTR uAddress) {
+	if (!uSendPacket) {
+		return false;
+	}
+
+	ULONG_PTR uCall = uAddress + 0x0B;
+	ULONG_PTR uFunction = uCall + 0x05 + *(signed long int *)(uCall + 0x01);
+	if (uFunction != uSendPacket) {
+		return false;
+	}
+
+	uEnterSendPacket = uAddress;
+	uEnterSendPacket_ret = uEnterSendPacket + 0x10;
 	uCClientSocket = *(ULONG_PTR *)(uAddress + 0x06);
 	return true;
 }
@@ -558,7 +576,9 @@ bool ListScan(Rosemary &r, ULONG_PTR &result, std::wstring aob[], size_t count, 
 {\
 	ListScan(r, u##func, AOB_##func, _countof(AOB_##func), iWorkingAob);\
 	DEBUG(L""#func" = " + QWORDtoString(u##func) + L", Aob = " + std::to_wstring(iWorkingAob));\
-	SHookFunction(func, u##func);\
+	if (iWorkingAob > -1) {\
+		SHookFunction(func, u##func);\
+	}\
 }
 
 bool PacketHook() {
@@ -607,6 +627,9 @@ bool PacketHook() {
 #else
 	if (uSendPacket) {
 		uEnterSendPacket = r.Scan(AOB_EnterSendPacket[0], ScannerEnterSendPacket);
+		if (!uEnterSendPacket) {
+			uEnterSendPacket = r.Scan(AOB_EnterSendPacket[1], ScannerEnterSendPacket_188);
+		}
 		if (uEnterSendPacket) {
 			SHookFunction(EnterSendPacket, uEnterSendPacket);
 		}
