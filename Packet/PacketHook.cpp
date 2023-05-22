@@ -25,14 +25,14 @@ bool RestartPipeClient() {
 // ShiftJIS to UTF16
 bool ShiftJIStoUTF8(std::string sjis, std::wstring &utf16) {
 	// UTF16へ変換する際の必要なバイト数を取得
-	int len = MultiByteToWideChar(CP_ACP, 0, sjis.c_str(), -1, 0, 0);
+	int len = MultiByteToWideChar(932, 0, sjis.c_str(), -1, 0, 0);
 	if (!len) {
 		return false;
 	}
 
 	// UTF16へ変換
 	std::vector<BYTE> b((len + 1) * sizeof(WORD));
-	if (!MultiByteToWideChar(CP_ACP, 0, sjis.c_str(), -1, (WCHAR *)&b[0], len)) {
+	if (!MultiByteToWideChar(932, 0, sjis.c_str(), -1, (WCHAR *)&b[0], len)) {
 		return false;
 	}
 
@@ -98,6 +98,11 @@ typedef struct {
 	BYTE *data;
 } PacketExtraInformation;
 
+DWORD CountUpPacketID(DWORD &id) {
+	id += 2;
+	return id;
+}
+
 
 void AddExtra(PacketExtraInformation &pxi) {
 	EnterCriticalSection(&cs);
@@ -154,7 +159,7 @@ void AddSendPacket(OutPacket *p, ULONG_PTR addr, bool &bBlock) {
 	pem->addr = addr;
 	pem->Binary.length = p->encoded;
 	memcpy_s(pem->Binary.packet, p->encoded, p->packet, p->encoded);
-	packet_id_out += 2;
+	CountUpPacketID(packet_id_out); // SendPacketとEnterSendPacketがあるのでここでカウントアップ
 
 #ifdef _WIN64
 	if (p->header) {
@@ -302,13 +307,23 @@ void __fastcall SendPacket_Hook(void *ecx, void *edx, OutPacket *p) {
 }
 #endif
 
+bool IGNORE_PACKET = false; // 無視
+void(__thiscall *_WriteTempPacket)(void *ecx) = 0;
+void __fastcall WriteTempPacket_Hook(void *ecx, void *edx) {
+	IGNORE_PACKET = true;
+	_WriteTempPacket(ecx);
+	IGNORE_PACKET = false;
+}
+
 #ifdef _WIN64
 void COutPacket_Hook(OutPacket *p, WORD w) {
 #else
 void __fastcall  COutPacket_Hook(OutPacket *p, void *edx, WORD w) {
 #endif
-	PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODEHEADER, 0, sizeof(WORD) };
-	AddExtra(pxi);
+	if (!IGNORE_PACKET) {
+		PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODEHEADER, 0, sizeof(WORD) };
+		AddExtra(pxi);
+	}
 	return _COutPacket(p, w);
 }
 
@@ -318,8 +333,10 @@ void Encode1_Hook(OutPacket *p, BYTE b) {
 void __fastcall Encode1_Hook(OutPacket *p, void *edx, BYTE b) {
 #endif
 	if (p->encoded) {
-		PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODE1, p->encoded, sizeof(BYTE) };
-		AddExtra(pxi);
+		if (!IGNORE_PACKET) {
+			PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODE1, p->encoded, sizeof(BYTE) };
+			AddExtra(pxi);
+		}
 	}
 	return _Encode1(p, b);
 }
@@ -330,8 +347,10 @@ void Encode2_Hook(OutPacket *p, WORD w) {
 void __fastcall Encode2_Hook(OutPacket *p, void *edx, WORD w) {
 #endif
 	if (p->encoded) {
-		PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODE2, p->encoded, sizeof(WORD) };
-		AddExtra(pxi);
+		if (!IGNORE_PACKET) {
+			PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODE2, p->encoded, sizeof(WORD) };
+			AddExtra(pxi);
+		}
 	}
 	return _Encode2(p, w);
 
@@ -342,8 +361,10 @@ void Encode4_Hook(OutPacket *p, DWORD dw) {
 #else
 void __fastcall Encode4_Hook(OutPacket *p, void *edx, DWORD dw) {
 #endif
-	PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODE4, p->encoded, sizeof(DWORD) };
-	AddExtra(pxi);
+	if (!IGNORE_PACKET) {
+		PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODE4, p->encoded, sizeof(DWORD) };
+		AddExtra(pxi);
+	}
 	return _Encode4(p, dw);
 }
 
@@ -360,12 +381,14 @@ void EncodeStr_Hook(OutPacket *p, void *s) {
 #else
 void __fastcall EncodeStr_Hook(OutPacket *p, void *edx, char *s) {
 #endif
+	if (!IGNORE_PACKET) {
 #ifdef _WIN64
-	PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODESTR, p->encoded, sizeof(WORD) + *(DWORD *)(*(ULONG_PTR *)s - 0x04) };
+		PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODESTR, p->encoded, sizeof(WORD) + *(DWORD *)(*(ULONG_PTR *)s - 0x04) };
 #else
-	PacketExtraInformation pxi = { packet_id_out, (DWORD)_ReturnAddress(), ENCODESTR, p->encoded, sizeof(WORD) + strlen(s) };
+		PacketExtraInformation pxi = { packet_id_out, (DWORD)_ReturnAddress(), ENCODESTR, p->encoded, sizeof(WORD) + strlen(s) };
 #endif
-	AddExtra(pxi);
+		AddExtra(pxi);
+	}
 	return _EncodeStr(p, s);
 }
 
@@ -374,8 +397,10 @@ void EncodeBuffer_Hook(OutPacket *p, BYTE *b, DWORD len) {
 #else
 void __fastcall EncodeBuffer_Hook(OutPacket *p, void *edx, BYTE *b, DWORD len) {
 #endif
-	PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODEBUFFER, p->encoded, len };
-	AddExtra(pxi);
+	if (!IGNORE_PACKET) {
+		PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODEBUFFER, p->encoded, len };
+		AddExtra(pxi);
+	}
 	return _EncodeBuffer(p, b, len);
 }
 
@@ -386,7 +411,8 @@ void ProcessPacket_Hook(void *pCClientSocket, InPacket *p) {
 void __fastcall ProcessPacket_Hook(void *pCClientSocket, void *edx, InPacket *p) {
 #endif
 	if (p->unk2 == 0x02) {
-		packet_id_in += 2;
+		CountUpPacketID(packet_id_in);
+
 		bool bBlock = false;
 		AddRecvPacket(p, (ULONG_PTR)_ReturnAddress(), bBlock);
 		if (!bBlock) {
@@ -653,6 +679,11 @@ bool PacketHook() {
 #endif
 		HOOKDEBUG(EncodeStr);
 		HOOKDEBUG(EncodeBuffer);
+
+#ifndef _WIN64
+		ULONG_PTR uWriteTempPacket = 0;
+		HOOKDEBUG(WriteTempPacket);
+#endif
 	}
 
 	HOOKDEBUG(ProcessPacket);
