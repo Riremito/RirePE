@@ -645,7 +645,7 @@ bool PacketHook() {
 		*(ULONG_PTR *)&bEnterSendPacket[0x11] = (ULONG_PTR)*_SendPacket;
 		bEnterSendPacket[3] = ((BYTE *)uSendPacket_EH_Ret)[3]; // add rsp,XX -> sub rsp,XX
 
-		uCClientSocket = uSendPacket_EH + Offset_SendPacket_EH_CClientSocket;
+		uCClientSocket = uSendPacket_EH + Offset_SendPacket_EH_CClientSocket[iWorkingAob];
 		uCClientSocket += *(signed long int *)(uCClientSocket + 0x01) + 0x05;
 		_CClientSocket = (decltype(_CClientSocket))uCClientSocket;
 		DEBUG(L"uCClientSocket = " + QWORDtoString(uCClientSocket));
