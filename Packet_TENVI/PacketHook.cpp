@@ -76,7 +76,7 @@ typedef struct {
 	ULONG_PTR addr; // リターンアドレス
 	MessageHeader fmt; // フォーマットの種類
 	ULONG_PTR pos; // 場所
-	ULONG_PTR len; // データの長さ (DecodeBuffer以外不要)
+	ULONG_PTR size; // データの長さ (DecodeBuffer以外不要)
 
 } PacketExtraInformation;
 
@@ -99,7 +99,7 @@ void AddExtra(PacketExtraInformation &pxi) {
 	pem->id = pxi.id;
 	pem->addr = pxi.addr;
 	pem->Extra.pos = pxi.pos;
-	pem->Extra.size = pxi.len;
+	pem->Extra.size = pxi.size;
 
 	if (!pc->Send(b, sizeof(PacketEditorMessage))) {
 		RestartPipeClient();

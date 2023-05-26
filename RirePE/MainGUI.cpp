@@ -103,6 +103,47 @@ bool UpdateLogger(PacketEditorMessage &pem, bool &bBlock) {
 	return true;
 }
 
+// Status, Format Packetの更新
+bool UpdateStatus(PacketEditorMessage &pem) {
+	if (pem.header != SENDPACKET && pem.header != DECODE_END) {
+		return false;
+	}
+
+	std::wstring wID = std::to_wstring(pem.id);
+	Alice &a = GetMainGUI();
+	int line = 0;
+
+	if (!a.ListView_Find(LISTVIEW_LOGGER, LV_ID, wID, line)) {
+		return false;
+	}
+
+	std::vector<PacketData> &vpd = (pem.header == SENDPACKET) ? GetOutPacketFormat() : GetInPacketFormat();
+	for (auto &pd : vpd) {
+		if (pd.id == pem.id) {
+			if (pd.status != 1) {
+				a.ListView_UpdateItem(LISTVIEW_LOGGER, LV_STATUS, line, L"NG");
+				return true;
+			}
+			std::wstring wFormatPacket;
+			for (auto &pf : pd.format) {
+				if (wFormatPacket.length()) {
+					wFormatPacket += L" ";
+				}
+				wFormatPacket += GetFormatData(pd, pf);
+
+				if (wFormatPacket.length() > 4096) {
+					return false;
+				}
+			}
+
+			a.ListView_UpdateItem(LISTVIEW_LOGGER, LV_PACKET_FORMAT, line, wFormatPacket);
+			return true;
+		}
+	}
+
+	return false;
+}
+
 // ListViewで選択中のPacketをセット
 bool SetRawPacket(Alice &a, MessageHeader type, std::wstring &text_packet) {
 	if (text_packet.length() > 1024) {
@@ -127,8 +168,10 @@ bool SetRawPacket(Alice &a, MessageHeader type, std::wstring &text_packet) {
 bool OnCreate(Alice &a) {
 	a.ListView(LISTVIEW_LOGGER, 3, 3, (PE_WIDTH - 6), (PE_HEIGHT * 2 / 3 - 6));
 	a.ListView_AddHeader(LISTVIEW_LOGGER, L"Type", 40);
-	a.ListView_AddHeader(LISTVIEW_LOGGER, L"ID", 50);
+	a.ListView_AddHeader(LISTVIEW_LOGGER, L"ID", 10);
 	a.ListView_AddHeader(LISTVIEW_LOGGER, L"Length", 50);
+	a.ListView_AddHeader(LISTVIEW_LOGGER, L"Status", 50);
+	a.ListView_AddHeader(LISTVIEW_LOGGER, L"Format Packet", 10);
 	a.ListView_AddHeader(LISTVIEW_LOGGER, L"Packet", (PE_WIDTH - 180));
 
 

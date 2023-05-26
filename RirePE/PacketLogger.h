@@ -6,6 +6,7 @@ typedef struct {
 	MessageHeader type;
 	ULONG_PTR pos;
 	ULONG_PTR size;
+	bool modified;
 } PacketFormat;
 
 typedef struct {
