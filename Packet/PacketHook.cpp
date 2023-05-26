@@ -607,7 +607,7 @@ bool ListScan(Rosemary &r, ULONG_PTR &result, std::wstring aob[], size_t count, 
 	}\
 }
 
-bool PacketHook() {
+bool PacketHook_Thread() {
 	InitializeCriticalSection(&cs);
 	Rosemary r;
 
@@ -701,5 +701,16 @@ bool PacketHook() {
 
 	StartPipeClient();
 	RunPacketSender();
+	return true;
+}
+
+
+bool PacketHook() {
+	HANDLE hThread = CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)PacketHook_Thread, NULL, NULL, NULL);
+
+	if (hThread) {
+		CloseHandle(hThread);
+	}
+
 	return true;
 }
