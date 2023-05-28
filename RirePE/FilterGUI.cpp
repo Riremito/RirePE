@@ -212,6 +212,50 @@ bool AddFilter(Alice &a, int nIDDlgItem, PacketFilter &pf) {
 	return true;
 }
 
+bool AutoIgnore(PacketEditorMessage &pem) {
+	if (pem.header != SENDPACKET && pem.header != RECVPACKET) {
+		return false;
+	}
+
+	int header_size = GetHeaderSize();
+
+	if (pem.Binary.length < (DWORD)header_size) {
+		return false;
+	}
+
+	DWORD header = 0;
+	switch (header_size) {
+	case 1: {
+		header = (DWORD)pem.Binary.packet[0];
+		break;
+	}
+	case 2: {
+		header = (DWORD)*(WORD *)&pem.Binary.packet[0];
+		break;
+	}
+	case 4: {
+		header = *(DWORD *)&pem.Binary.packet[0];
+		break;
+	}
+	default:
+	{
+		return false;
+	}
+	}
+
+	for (auto &v : filter_list) {
+		if (v.packet == pem.header && v.header_size == header_size) {
+			if (v.header == header) {
+				return false;
+			}
+		}
+	}
+
+	PacketFilter pf = { pem.header, IGNORE_PACKET, header, header_size };
+	filter_list.push_back(pf);
+	return true;
+}
+
 bool DeleteFilter(Alice &a, int nIDDlgItem, MessageHeader type) {
 	PacketFilter pf = { type };
 	if (!GetHeader(a, nIDDlgItem, pf.header)) {

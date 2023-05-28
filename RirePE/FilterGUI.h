@@ -36,5 +36,6 @@ bool InitFilterGUI(HINSTANCE hInstance);
 bool OpenFilterGUI();
 bool CheckFilter(PacketEditorMessage &pem, FilterType &ft);
 bool SetFilterHeader(MessageHeader type, std::wstring wHeader);
+bool AutoIgnore(PacketEditorMessage &pem);
 
 #endif

@@ -19,6 +19,7 @@ enum SubControl {
 	CHECK_LOCK,
 	BUTTON_INC_SEND,
 	BUTTON_INC_RECV,
+	CHECK_AUTO_IGNORE,
 };
 
 enum ListViewIndex {

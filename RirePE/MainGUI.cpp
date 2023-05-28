@@ -44,6 +44,11 @@ bool UpdateLogger(PacketEditorMessage &pem, bool &bBlock) {
 
 	Alice &a = GetMainGUI();
 
+	// auto ignore mode
+	if (a.CheckBoxStatus(CHECK_AUTO_IGNORE)) {
+		AutoIgnore(pem);
+	}
+
 	std::wstring wType;
 	if (pem.header == SENDPACKET) {
 		if (!a.CheckBoxStatus(CHECK_SEND)) {
@@ -199,6 +204,10 @@ bool OnCreate(Alice &a) {
 	a.Button(BUTTON_INC_SEND, L"+", (PE_WIDTH - 25), (PE_HEIGHT * 2 / 3 + 50));
 	a.Button(BUTTON_INC_RECV, L"+", (PE_WIDTH - 25), (PE_HEIGHT * 2 / 3 + 70));
 #endif
+
+	// add header to ignore list automatically
+	a.CheckBox(CHECK_AUTO_IGNORE, L"Auto Filter Mode", 450, (PE_HEIGHT * 2 / 3 + 30));
+
 	PacketLogger(); // logger
 	return true;
 }
