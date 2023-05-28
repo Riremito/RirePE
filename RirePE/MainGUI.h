@@ -8,6 +8,7 @@
 #include"../RirePE/PacketSender.h"
 #include"../RirePE/FormatGUI.h"
 #include"../RirePE/FilterGUI.h"
+#include"../RirePE/Config.h"
 
 #define PE_WIDTH 800
 #define PE_HEIGHT 600
@@ -21,5 +22,6 @@ bool UpdateLogger(PacketEditorMessage &pem, bool &bBlock);
 bool UpdateStatus(PacketEditorMessage &pem);
 void SetInfo(std::wstring wText);
 int GetHeaderSize();
+bool SetHeaderSize(int header_size);
 
 #endif

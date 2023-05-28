@@ -18,6 +18,15 @@ int GetHeaderSize() {
 	return global_header_size;
 }
 
+bool SetHeaderSize(int header_size) {
+	if (header_size < 1 || 8 < header_size) {
+		return false;
+	}
+
+	global_header_size = header_size;
+	return true;
+}
+
 // Ú‘±ó‘Ô
 void SetInfo(std::wstring wText) {
 	Alice &a = GetMainGUI();
@@ -184,7 +193,7 @@ bool OnCreate(Alice &a) {
 
 	a.Button(BUTTON_OPEN_FORMATVIEW, L"Format View", 100, (PE_HEIGHT * 2 / 3 + 10), 100);
 	a.StaticText(STATIC_HEADER_SIZE, L"Header Size:", 250, (PE_HEIGHT * 2 / 3 + 10));
-	a.EditBox(EDIT_HEADER_SIZE, 330, (PE_HEIGHT * 2 / 3 + 10), L"2", 50);
+	a.EditBox(EDIT_HEADER_SIZE, 330, (PE_HEIGHT * 2 / 3 + 10), std::to_wstring(GetHeaderSize()), 50);
 	a.CheckBox(CHECK_HEADER_SIZE, L"Update", 390, (PE_HEIGHT * 2 / 3 + 10), BST_CHECKED);
 	a.ReadOnly(EDIT_HEADER_SIZE);
 	a.Button(BUTTON_OPEN_FILTER, L"Filter", 450, (PE_HEIGHT * 2 / 3 + 10), 100);
@@ -207,6 +216,8 @@ bool OnCreate(Alice &a) {
 
 	// add header to ignore list automatically
 	a.CheckBox(CHECK_AUTO_IGNORE, L"Auto Filter Mode", 450, (PE_HEIGHT * 2 / 3 + 30));
+	// save ignore list
+	a.Button(BUTTON_SAVE_CONFIG, L"Save Config", 570, (PE_HEIGHT * 2 / 3 + 30));
 
 	PacketLogger(); // logger
 	return true;
@@ -254,6 +265,11 @@ bool OnCommand(Alice &a, int nIDDlgItem) {
 
 	if (nIDDlgItem == BUTTON_OPEN_FILTER) {
 		OpenFilterGUI();
+		return true;
+	}
+
+	if (nIDDlgItem == BUTTON_SAVE_CONFIG) {
+		SaveConfig();
 		return true;
 	}
 

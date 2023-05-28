@@ -36,6 +36,9 @@
     <ClInclude Include="..\RirePE\FilterGUI.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="..\RirePE\Config.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\RirePE\MainGUI.cpp">
@@ -54,6 +57,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="..\RirePE\FilterGUI.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RirePE\Config.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>

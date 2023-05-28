@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\RirePE\Config.h" />
     <ClInclude Include="..\RirePE\ControlList.h" />
     <ClInclude Include="..\RirePE\FilterGUI.h" />
     <ClInclude Include="..\RirePE\FormatGUI.h" />
@@ -28,6 +29,7 @@
     <ClInclude Include="..\RirePE\RirePE.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\RirePE\Config.cpp" />
     <ClCompile Include="..\RirePE\FilterGUI.cpp" />
     <ClCompile Include="..\RirePE\FormatGUI.cpp" />
     <ClCompile Include="..\RirePE\MainGUI.cpp" />

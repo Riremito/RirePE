@@ -20,6 +20,7 @@ enum SubControl {
 	BUTTON_INC_SEND,
 	BUTTON_INC_RECV,
 	CHECK_AUTO_IGNORE,
+	BUTTON_SAVE_CONFIG,
 };
 
 enum ListViewIndex {
