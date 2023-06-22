@@ -71,7 +71,8 @@ char** (*_DecodeStr)(InPacket *p, char **s);
 void(*_DecodeBuffer)(InPacket *p, BYTE *b, DWORD len);
 #else
 void(__thiscall *_SendPacket)(void *ecx, OutPacket *p);
-void(__thiscall *_COutPacket)(OutPacket *p, WORD w);
+void(__thiscall *_COutPacket)(OutPacket *p, WORD w) = NULL;
+void(__thiscall *_COutPacket_Old)(OutPacket *p, WORD w, DWORD dw) = NULL;
 void(__thiscall *_Encode1)(OutPacket *p, BYTE b);
 void(__thiscall *_Encode2)(OutPacket *p, WORD w);
 void(__thiscall *_Encode4)(OutPacket *p, DWORD dw);
@@ -324,8 +325,25 @@ void __fastcall  COutPacket_Hook(OutPacket *p, void *edx, WORD w) {
 		PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODEHEADER, 0, sizeof(WORD) };
 		AddExtra(pxi);
 	}
+
+#ifndef _WIN64
+	if (!_COutPacket && _COutPacket_Old) {
+		return _COutPacket_Old(p, w, 0);
+	}
+#endif
 	return _COutPacket(p, w);
 }
+
+#ifndef _WIN64
+// v131.0
+void __fastcall  COutPacket_Old_Hook(OutPacket *p, void *edx, WORD w, DWORD dw) {
+	if (!IGNORE_PACKET) {
+		PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODEHEADER, 0, sizeof(WORD) };
+		AddExtra(pxi);
+	}
+	return _COutPacket_Old(p, w, dw);
+}
+#endif
 
 #ifdef _WIN64
 void Encode1_Hook(OutPacket *p, BYTE b) {
@@ -614,6 +632,7 @@ bool PacketHook_Thread() {
 	//ULONG_PTR uSendPacket = 0;
 	ULONG_PTR uProcessPacket = 0;
 	ULONG_PTR uCOutPacket = 0;
+	ULONG_PTR uCOutPacket_Old = 0;
 	ULONG_PTR uEncode1 = 0;
 	ULONG_PTR uEncode2 = 0;
 	ULONG_PTR uEncode4 = 0;
@@ -671,6 +690,12 @@ bool PacketHook_Thread() {
 	if (uSendPacket) {
 #endif
 		HOOKDEBUG(COutPacket);
+#ifndef _WIN64
+		// old version
+		if (!_COutPacket) {
+			HOOKDEBUG(COutPacket_Old);
+		}
+#endif
 		HOOKDEBUG(Encode1);
 		HOOKDEBUG(Encode2);
 		HOOKDEBUG(Encode4);
