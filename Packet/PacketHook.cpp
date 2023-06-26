@@ -7,11 +7,27 @@
 #include<intrin.h>
 #pragma intrinsic(_ReturnAddress)
 
+int target_pid = 0;
+std::wstring GetPipeNameLogger() {
+	if (target_pid) {
+		return PE_LOGGER_PIPE_NAME + std::to_wstring(target_pid);
+	}
+	return PE_LOGGER_PIPE_NAME;
+}
+
+std::wstring GetPipeNameSender() {
+	if (target_pid) {
+		return PE_SENDER_PIPE_NAME + std::to_wstring(target_pid);
+	}
+	return PE_SENDER_PIPE_NAME;
+}
+
+
 PipeClient *pc = NULL;
 CRITICAL_SECTION cs;
 
 bool StartPipeClient() {
-	pc = new PipeClient(PE_LOGGER_PIPE_NAME);
+	pc = new PipeClient(GetPipeNameLogger());
 	return pc->Run();
 }
 
@@ -627,7 +643,7 @@ bool ScannerEnterSendPacket_188(ULONG_PTR uAddress) {
 }
 #endif
 
-bool PacketHook_Thread() {
+bool PacketHook_Thread(HINSTANCE hinstDLL) {
 	InitializeCriticalSection(&cs);
 	Rosemary r;
 
@@ -707,14 +723,26 @@ bool PacketHook_Thread() {
 		AOBHook(DecodeBuffer);
 	}
 
+
+	std::wstring wDir;
+	if (GetDir(wDir, hinstDLL)) {
+		target_pid = GetCurrentProcessId();
+		std::wstring param = std::to_wstring(target_pid) + L" MapleStoryClass";
+#ifndef _WIN64
+		ShellExecuteW(NULL, NULL, (wDir + L"\\RirePE.exe").c_str(), param.c_str(), wDir.c_str(), SW_SHOW);
+#else
+		ShellExecuteW(NULL, NULL, (wDir + L"\\RirePE64.exe").c_str(), param.c_str(), wDir.c_str(), SW_SHOW);
+#endif
+	}
+
 	StartPipeClient();
 	RunPacketSender();
 	return true;
 }
 
 
-bool PacketHook() {
-	HANDLE hThread = CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)PacketHook_Thread, NULL, NULL, NULL);
+bool PacketHook(HINSTANCE hinstDLL) {
+	HANDLE hThread = CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)PacketHook_Thread, hinstDLL, NULL, NULL);
 
 	if (hThread) {
 		CloseHandle(hThread);

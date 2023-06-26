@@ -116,7 +116,7 @@ bool CommunicateThread(PipeServerThread& psh) {
 }
 
 bool PacketSender() {
-	PipeServer ps(PE_SENDER_PIPE_NAME);
+	PipeServer ps(GetPipeNameSender());
 	ps.SetCommunicate(CommunicateThread);
 	return ps.Run();
 }

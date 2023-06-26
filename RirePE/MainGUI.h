@@ -24,4 +24,7 @@ void SetInfo(std::wstring wText);
 int GetHeaderSize();
 bool SetHeaderSize(int header_size);
 
+std::wstring GetPipeNameLogger();
+std::wstring GetPipeNameSender();
+
 #endif

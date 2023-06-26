@@ -217,7 +217,7 @@ bool LoggerCommunicate(PipeServerThread& psh) {
 }
 
 bool RunPacketLoggerPipe() {
-	PipeServer ps(PE_LOGGER_PIPE_NAME);
+	PipeServer ps(GetPipeNameLogger());
 	ps.SetCommunicate(LoggerCommunicate);
 	return ps.Run();
 }
