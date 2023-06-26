@@ -98,15 +98,6 @@ std::wstring AOB_ProcessPacket[] = {
 	#endif
 };
 // Format Hook
-
-std::wstring AOB_WriteTempPacket[] = {
-	// v131.0
-	L"B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 EC 18 57 8B F9 8D 8F ?? ?? ?? ?? 6A 00 89 4D E8 E8 ?? ?? ?? ?? 85 C0 0F 84",
-	// v188.0 test 009C01F0, 移動パケットが常に生成されるが送信されないため不具合が出るので無視する
-	L"56 8B F1 8B 06 8B 50 24 57 FF D2 8B F8 85 FF 74 2C 8B 06 8B 50 38 8B CE C7 86 ?? ?? ?? ??01 00 00 00 FF D2 8B 06 8B 50 28 57 8B CE FF D2 85 C0 74 0B 8B 06 8B 50 2C 5F 8B CE 5E FF E2 5F 5E C3",
-};
-
-// Format Hook
 std::wstring AOB_COutPacket[] = {
 	#ifdef _WIN64
 	// v410.2 from v403.1

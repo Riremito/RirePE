@@ -628,60 +628,24 @@ bool ScannerEnterSendPacket_188(ULONG_PTR uAddress) {
 }
 #endif
 
-bool ListScan(Rosemary &r, ULONG_PTR &result, std::wstring aob[], size_t count, int &used) {
-	result = 0; // scan result
-	used = -1; // which aob is used
-	for (size_t i = 0; i < count; i++) {
-		result = r.Scan(aob[i]);
-		if (result) {
-			used = (int)i;
-			return true;
-		}
-	}
-	return false;
-}
-
-#define HOOKDEBUG(func) \
-{\
-	ListScan(r, u##func, AOB_##func, _countof(AOB_##func), iWorkingAob);\
-	DEBUG(L""#func" = " + QWORDtoString(u##func) + L", Aob = " + std::to_wstring(iWorkingAob));\
-	if (iWorkingAob > -1) {\
-		SHookFunction(func, u##func);\
-	}\
-}
-
 bool PacketHook_Thread() {
 	InitializeCriticalSection(&cs);
 	Rosemary r;
 
 	//ULONG_PTR uSendPacket = 0;
 	ULONG_PTR uProcessPacket = 0;
-	ULONG_PTR uCOutPacket = 0;
-	ULONG_PTR uCOutPacket_Old = 0;
-	ULONG_PTR uEncode1 = 0;
-	ULONG_PTR uEncode2 = 0;
-	ULONG_PTR uEncode4 = 0;
-	ULONG_PTR uEncodeStr = 0;
-	ULONG_PTR uEncodeBuffer = 0;
-	ULONG_PTR uDecode1 = 0;
-	ULONG_PTR uDecode2 = 0;
-	ULONG_PTR uDecode4 = 0;
-	ULONG_PTR uDecodeStr = 0;
-	ULONG_PTR uDecodeBuffer = 0;
-	int iWorkingAob = 0; // do not change name
 
 #ifdef _WIN64
 	ULONG_PTR uSendPacket = 0;
-	ULONG_PTR uSendPacket_EH = 0;
-	ULONG_PTR uEncode8 = 0;
-	ULONG_PTR uDecode8 = 0;
 	ULONG_PTR uCClientSocket = 0;
 #endif
 
-	HOOKDEBUG(SendPacket);
+	AOBHookWithResult(SendPacket);
 
 #ifdef _WIN64
-	HOOKDEBUG(SendPacket_EH);
+	size_t iWorkingAob = -1;
+	ULONG_PTR uSendPacket_EH = r.Scan(AOB_SendPacket_EH, _countof(AOB_SendPacket_EH), iWorkingAob);
+	SCANRES(uSendPacket_EH);
 
 	if (uSendPacket && uSendPacket_EH) {
 		uSendPacket_EH_Ret = uSendPacket_EH + Offset_SendPacket_EH_Ret[iWorkingAob];
@@ -714,39 +678,34 @@ bool PacketHook_Thread() {
 #else
 	if (uSendPacket) {
 #endif
-		HOOKDEBUG(COutPacket);
+		AOBHook(COutPacket);
 #ifndef _WIN64
 		// old version
 		if (!_COutPacket) {
-			HOOKDEBUG(COutPacket_Old);
+			AOBHook(COutPacket_Old);
 		}
 #endif
-		HOOKDEBUG(Encode1);
-		HOOKDEBUG(Encode2);
-		HOOKDEBUG(Encode4);
+		AOBHook(Encode1);
+		AOBHook(Encode2);
+		AOBHook(Encode4);
 #ifdef _WIN64
-		HOOKDEBUG(Encode8);
+		AOBHook(Encode8);
 #endif
-		HOOKDEBUG(EncodeStr);
-		HOOKDEBUG(EncodeBuffer);
-
-#ifndef _WIN64
-		//ULONG_PTR uWriteTempPacket = 0;
-		//HOOKDEBUG(WriteTempPacket);
-#endif
+		AOBHook(EncodeStr);
+		AOBHook(EncodeBuffer);
 	}
 
-	HOOKDEBUG(ProcessPacket);
+	AOBHookWithResult(ProcessPacket);
 
 	if (uProcessPacket) {
-		HOOKDEBUG(Decode1);
-		HOOKDEBUG(Decode2);
-		HOOKDEBUG(Decode4);
+		AOBHook(Decode1);
+		AOBHook(Decode2);
+		AOBHook(Decode4);
 #ifdef _WIN64
-		HOOKDEBUG(Decode8);
+		AOBHook(Decode8);
 #endif
-		HOOKDEBUG(DecodeStr);
-		HOOKDEBUG(DecodeBuffer);
+		AOBHook(DecodeStr);
+		AOBHook(DecodeBuffer);
 	}
 
 	StartPipeClient();
