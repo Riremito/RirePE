@@ -672,6 +672,8 @@ bool PacketHook_Thread(HINSTANCE hinstDLL) {
 		uCClientSocket += *(signed long int *)(uCClientSocket + 0x01) + 0x05;
 		_CClientSocket = (decltype(_CClientSocket))uCClientSocket;
 		DEBUG(L"uCClientSocket = " + QWORDtoString(uCClientSocket));
+
+		SHookFunction(SendPacket_EH, uSendPacket_EH);
 }
 #else
 	if (uSendPacket) {
