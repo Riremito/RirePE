@@ -258,6 +258,14 @@ void __fastcall ProcessPacket_Hook(void *pCClientSocket, void *edx, InPacket *p)
 
 WORD __fastcall DecodeHeader_Hook(InPacket *p, void *edx) {
 	if (p->decoded == 0x04) {
+		{
+			PacketExtraInformation pxi = { packet_id_in++, (ULONG_PTR)0, DECODE_END, 0, 0 };
+			AddExtra(pxi);
+
+			packet_id_in++;
+			bool bBlock = false;
+			AddRecvPacket(p, (ULONG_PTR)_ReturnAddress(), bBlock);
+		}
 		PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)_ReturnAddress(), TENVI_DECODE_HEADER_1, p->decoded - 4, sizeof(BYTE) };
 		AddExtra(pxi);
 	}
@@ -307,6 +315,21 @@ void __fastcall DecodeBuffer_Hook(InPacket *p, void *edx, BYTE *b, DWORD len) {
 	AddExtra(pxi);
 	return _DecodeBuffer(p, b, len);
 }
+
+ULONGLONG (__thiscall *_Decode8)(InPacket *);
+ULONGLONG __fastcall Decode8_Hook(InPacket *p) {
+	PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)_ReturnAddress(), DECODE8, p->decoded - 4, sizeof(ULONGLONG) };
+	AddExtra(pxi);
+	return _Decode8(p);
+}
+
+float (__thiscall *_DecodeFloat)(InPacket *);
+float __fastcall DecodeFloat_Hook(InPacket *p) {
+	PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)_ReturnAddress(), DECODE4, p->decoded - 4, sizeof(DWORD) };
+	AddExtra(pxi);
+	return _DecodeFloat(p);
+}
+
 
 // Packet Injector
 ULONG_PTR uSendPacket = 0;
@@ -362,11 +385,88 @@ bool ListScan(Rosemary &r, ULONG_PTR &result, std::wstring aob[], size_t count, 
 	return false;
 }
 
+
+#define REGION_JP 0
+#define REGION_CN 1
+#define REGION_HK 2
+#define REGION_KR 3
+
+#define REGION REGION_KR
+
+#if REGION == REGION_JP
+#define Addr_OnPacketClass 0x006DB164
+#define Addr_EnterSendPacket 0x0055F2A8
+#define Addr_OutPacket 0x0055F36D
+#define Addr_Encode1 0x0040F287
+#define Addr_Encode2 0x00402FFD
+#define Addr_Encode4 0x00403025
+#define Addr_EncodeWStr1 0x0040F435
+#define Addr_DecodeHeader 0x0055F357
+#define Addr_Decode1 0x00402EFE
+#define Addr_Decode2 0x00402F30
+#define Addr_Decode4 0x00402F63
+#define Addr_DecodeWStr1 0x0045BBCD
+#define Addr_DecodeWStr2 0x0040921A
+#define Addr_Decode8 0x00402FC7
+#define Addr_DecodeFloat 0x00402F95
+#elif REGION == REGION_CN
+#define Addr_OnPacketClass 0x006FAF44
+#define Addr_EnterSendPacket 0x0056AADB
+#define Addr_OutPacket 0x0056ABA0
+#define Addr_Encode1 0x0040EEB6
+#define Addr_Encode2 0x0040346A
+#define Addr_Encode4 0x00403492
+#define Addr_Encode8 0x004034B8
+#define Addr_EncodeWStr1 0x00413ECC
+#define Addr_EncodeWStr2 0x00496239
+#define Addr_DecodeHeader 0x0056AB8A
+#define Addr_Decode1 0x0040336B
+#define Addr_Decode2 0x0040339D
+#define Addr_Decode4 0x004033D0
+#define Addr_DecodeWStr1 0x0045CB52
+#define Addr_DecodeWStr2 0x00408EEF
+#define Addr_Decode8 0x00403434
+#define Addr_DecodeFloat 0x00403402
+#elif REGION == REGION_HK
+#define Addr_OnPacketClass 0x0075CF84
+#define Addr_EnterSendPacket 0x005AC927
+#define Addr_OutPacket 0x005AC9EC
+#define Addr_Encode1 0x00417D30
+#define Addr_Encode2 0x00402262
+#define Addr_Encode4 0x0040228A
+#define Addr_EncodeWStr1 0x0040FC19
+#define Addr_DecodeHeader 0x005AC9D6
+#define Addr_Decode1 0x00402163
+#define Addr_Decode2 0x00402195
+#define Addr_Decode4 0x004021C8
+#define Addr_DecodeWStr1 0x0043B921
+#define Addr_DecodeWStr2 0x00469777
+#define Addr_Decode8 0x0040222C
+#define Addr_DecodeFloat 0x004021FA
+#elif REGION == REGION_KR
+#define Addr_OnPacketClass 0x0075E184
+#define Addr_EnterSendPacket 0x005CBA0F
+#define Addr_OutPacket 0x005CBAD4
+#define Addr_Encode1 0x0040705B
+#define Addr_Encode2 0x00402249
+#define Addr_Encode4 0x00402271
+#define Addr_Encode8 0x00402297
+#define Addr_EncodeWStr1 0x004143DC
+#define Addr_DecodeHeader 0x005CBABE
+#define Addr_Decode1 0x0040214A
+#define Addr_Decode2 0x0040217C
+#define Addr_Decode4 0x004021AF
+#define Addr_DecodeWStr1 0x0044C2BE
+#define Addr_DecodeWStr2 0x0047B50E
+#define Addr_Decode8 0x00402213
+#define Addr_DecodeFloat 0x004021E1
+#endif
+
+
 void MyProcessPacket(InPacket *p) {
-	bool bBlock = false;
-	AddRecvPacket(p, (ULONG_PTR)_ReturnAddress(), bBlock);
-	void(__thiscall *_CurrentProcessPacket)(void *CurrentClass, InPacket *p) = (decltype(_CurrentProcessPacket)(*(DWORD *)(*(DWORD *)(*(DWORD *)(*(DWORD *)0x006DB164 + 0x160) + 0x00) + 0x2C)));
-	_CurrentProcessPacket((void *)(*(DWORD *)(*(DWORD *)0x006DB164 + 0x160)), p);
+	void *OnPacketClass = (void *)(*(DWORD *)(*(DWORD *)Addr_OnPacketClass + 0x160));
+	void(__thiscall *_OnPacket)(void *ecx, InPacket *p) = (decltype(_OnPacket)(*(DWORD *)(*(DWORD *)OnPacketClass + 0x2C)));
+	_OnPacket(OnPacketClass, p);
 	PacketExtraInformation pxi = { packet_id_in++, (ULONG_PTR)0, DECODE_END, 0, 0 };
 	AddExtra(pxi);
 }
@@ -382,9 +482,25 @@ bool PacketHook() {
 	InitializeCriticalSection(&cs);
 	Rosemary r;
 
-
+	SHookFunction(EnterSendPacket, Addr_EnterSendPacket);
+	SHookFunction(COutPacket, Addr_OutPacket);
+	SHookFunction(Encode1, Addr_Encode1);
+	SHookFunction(Encode2, Addr_Encode2);
+	SHookFunction(Encode4, Addr_Encode4);
+	SHookFunction(EncodeWStr1, Addr_EncodeWStr1);
+	SHookFunction(DecodeHeader, Addr_DecodeHeader);
+	SHookFunction(Decode1, Addr_Decode1);
+	SHookFunction(Decode2, Addr_Decode2);
+	SHookFunction(Decode4, Addr_Decode4);
+	SHookFunction(DecodeWStr1, Addr_DecodeWStr1);
+	SHookFunction(DecodeWStr2, Addr_DecodeWStr2);
+	SHookFunction(Decode8, Addr_Decode8);
+	SHookFunction(DecodeFloat, Addr_DecodeFloat);
+	/*
 	// [006DB3B8], CClientSocket
+	// 51 8B 0D ?? ?? ?? ??  E8 ?? ?? ?? ?? C3 - 2nd
 	SHookFunction(EnterSendPacket, 0x0055F2A8);
+	// 6A 04 B8 ?? ?? ?? ??  E8 ?? ?? ?? ?? 8B F1 89 75 ?? 8D 4E ?? 33 C0 89 01 89 41 04
 	SHookFunction(COutPacket, 0x0055F36D);
 	SHookFunction(Encode1, 0x0040F287);
 	SHookFunction(Encode2, 0x00402FFD);
@@ -392,13 +508,17 @@ bool PacketHook() {
 	SHookFunction(EncodeWStr1, 0x0040F435);
 	// 0040304B Encode8
 	//SHookFunction(ProcessPacket, 0x00493AF8);
+	// 56 6A 04 8B F1 E8 ?? ?? ?? ?? 8B CE E8 ?? ?? ?? ?? 0F B6 C0 5E C3
 	SHookFunction(DecodeHeader, 0x0055F357); // DecodeHeader
 	SHookFunction(Decode1, 0x00402EFE);
 	SHookFunction(Decode2, 0x00402F30);
 	SHookFunction(Decode4, 0x00402F63);
 	SHookFunction(DecodeWStr1, 0x0045BBCD);
 	SHookFunction(DecodeWStr2, 0x0040921A);
+	SHookFunction(Decode8, 0x00402FC7);
+	SHookFunction(DecodeFloat, 0x00402F95);
 	// 493624 str?
+	*/
 	StartPipeClient();
 	RunPacketSender();
 	return true;

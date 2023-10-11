@@ -30,17 +30,17 @@ VOID CALLBACK PacketInjector(HWND, UINT, UINT_PTR, DWORD) {
 		packet[3] = 0x39;
 		memcpy_s(&packet[4], pcm->Binary.length, &pcm->Binary.packet[0], pcm->Binary.length);
 		InPacket p = { 0x00, 0x02, &packet[0], 0x01, 0, 0, (WORD)packet.size(), 0, 0, 0x04 };
-		packet_id_in++;
+		//packet_id_in++;
 		MyProcessPacket(&p);
 
 
-		packet_id_in++;
+		//packet_id_in++;
 	}
 }
 
 decltype(CreateWindowExA) *_CreateWindowExA = NULL;
 HWND WINAPI CreateWindowExA_Hook(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam) {
-	if (lpClassName && strcmp(lpClassName, "EngineClass") == 0) {
+	if (lpClassName && (strcmp(lpClassName, "EngineClass") == 0 || strcmp(lpClassName, "TenviXEngine") == 0)) {
 		HWND hRet = _CreateWindowExA(dwExStyle, lpClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
 		if (!bInjectorCallback) {
 			bInjectorCallback = true;
@@ -58,7 +58,7 @@ BOOL CALLBACK SearchMaple(HWND hwnd, LPARAM lParam) {
 	if (GetWindowThreadProcessId(hwnd, &pid)) {
 		if (pid == GetCurrentProcessId()) {
 			if (GetClassNameW(hwnd, wcClassName, _countof(wcClassName) - 1)) {
-				if (wcscmp(wcClassName, L"EngineClass") == 0) {
+				if (wcscmp(wcClassName, L"EngineClass") == 0 || wcscmp(wcClassName, L"TenviXEngine") == 0) {
 					if (!bInjectorCallback) {
 						bInjectorCallback = true;
 						SetTimer(hwnd, 1337, 50, PacketInjector);

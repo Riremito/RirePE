@@ -286,7 +286,7 @@ bool OnNotify(Alice &a, int nIDDlgItem) {
 
 		check &= a.ListView_Copy(LISTVIEW_LOGGER, LV_TYPE, text_type, false);
 		check &= a.ListView_Copy(LISTVIEW_LOGGER, LV_ID, text_id, false);
-		check &= a.ListView_Copy(LISTVIEW_LOGGER, LV_PACKET, text_packet, true);
+		check &= a.ListView_Copy(LISTVIEW_LOGGER, LV_PACKET, text_packet, true, 4096);
 
 		if (!check) {
 			return false;

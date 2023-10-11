@@ -247,7 +247,7 @@ std::wstring GetFormatData(PacketData &pd, PacketFormat &pf) {
 	case TENVI_ENCODE_HEADER_1:
 	case TENVI_DECODE_HEADER_1:
 	{
-		return L"@" + BYTEtoString(pd.packet[pf.pos]);
+		return BYTEtoString(pd.packet[pf.pos]);
 	}
 	case TENVI_ENCODE_WSTR_1:
 	case TENVI_DECODE_WSTR_1:
@@ -455,7 +455,7 @@ std::wstring GetFormatType_MySrc(PacketData &pd, PacketFormat &pf) {
 			argpart = L"(" + GetFormatData(pd, pf) + L"); // " + GetAddress(pf.addr);
 		}
 		else {
-			argpart = L"(" + std::to_wstring(val) + L"); // " + GetAddress(pf.addr);
+			argpart = L"(#" + std::to_wstring(val) + L"); // " + GetAddress(pf.addr);
 		}
 	}
 
@@ -465,7 +465,7 @@ std::wstring GetFormatType_MySrc(PacketData &pd, PacketFormat &pf) {
 	case TENVI_ENCODE_HEADER_1:
 	case TENVI_DECODE_HEADER_1:
 	{
-		return L"HEADER";
+		return L"Header" + argpart;
 	}
 	case ENCODE1:
 	{
@@ -473,7 +473,7 @@ std::wstring GetFormatType_MySrc(PacketData &pd, PacketFormat &pf) {
 	}
 	case DECODE1:
 	{
-		return L"p.Encode1" + argpart;
+		return L"Encode1" + argpart;
 	}
 	case ENCODE2:
 	{
@@ -481,7 +481,7 @@ std::wstring GetFormatType_MySrc(PacketData &pd, PacketFormat &pf) {
 	}
 	case DECODE2:
 	{
-		return L"p.Encode2" + argpart;
+		return L"Encode2" + argpart;
 	}
 	case ENCODE4:
 	{
@@ -489,7 +489,7 @@ std::wstring GetFormatType_MySrc(PacketData &pd, PacketFormat &pf) {
 	}
 	case DECODE4:
 	{
-		return L"p.Encode4" + argpart;
+		return L"Encode4" + argpart;
 	}
 	case ENCODE8:
 	{
@@ -497,7 +497,7 @@ std::wstring GetFormatType_MySrc(PacketData &pd, PacketFormat &pf) {
 	}
 	case DECODE8:
 	{
-		return L"p.Encode8" + argpart;
+		return L"Encode8" + argpart;
 	}
 	case ENCODESTR:
 	{
@@ -505,7 +505,7 @@ std::wstring GetFormatType_MySrc(PacketData &pd, PacketFormat &pf) {
 	}
 	case DECODESTR:
 	{
-		return L"p.EncodeStr" + argpart;
+		return L"EncodeStr" + argpart;
 	}
 	case ENCODEBUFFER:
 	{
@@ -513,7 +513,13 @@ std::wstring GetFormatType_MySrc(PacketData &pd, PacketFormat &pf) {
 	}
 	case DECODEBUFFER:
 	{
-		return L"p.EncodeBuffer" + argpart;
+		return L"EncodeBuffer" + argpart;
+	}
+	case TENVI_DECODE_WSTR_1: {
+		return L"EncodeWStr" + argpart;
+	}
+	case TENVI_DECODE_WSTR_2: {
+		return L"EncodeWStr2" + argpart;
 	}
 	// ÉGÉâÅ[èàóù
 	case NOTUSED: {
