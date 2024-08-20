@@ -516,7 +516,7 @@ std::wstring GetFormatType_MySrc(PacketData &pd, PacketFormat &pf) {
 		return L"EncodeBuffer" + argpart;
 	}
 	case TENVI_DECODE_WSTR_1: {
-		return L"EncodeWStr" + argpart;
+		return L"EncodeWStr1" + argpart;
 	}
 	case TENVI_DECODE_WSTR_2: {
 		return L"EncodeWStr2" + argpart;
