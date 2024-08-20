@@ -1,4 +1,4 @@
-#include"../RirePE/MainGUI.h"
+ï»¿#include"../RirePE/MainGUI.h"
 
 int global_header_size = 2; // default, 0 = raw
 bool SetHeaderSize(Alice &a) {
@@ -27,13 +27,13 @@ bool SetHeaderSize(int header_size) {
 	return true;
 }
 
-// Ú‘±ó‘Ô
+// æ¥ç¶šçŠ¶æ…‹
 void SetInfo(std::wstring wText) {
 	Alice &a = GetMainGUI();
 	a.SetText(STATIC_INFO, wText);
 }
 
-// ListView‚ÌXV
+// ListViewã®æ›´æ–°
 bool UpdateLogger(PacketEditorMessage &pem, bool &bBlock) {
 	if (pem.header != SENDPACKET && pem.header != RECVPACKET) {
 		return false;
@@ -117,7 +117,7 @@ bool UpdateLogger(PacketEditorMessage &pem, bool &bBlock) {
 	return true;
 }
 
-// Status, Format Packet‚ÌXV
+// Status, Format Packetã®æ›´æ–°
 bool UpdateStatus(PacketEditorMessage &pem) {
 	if (pem.header != SENDPACKET && pem.header != DECODE_END) {
 		return false;
@@ -158,7 +158,7 @@ bool UpdateStatus(PacketEditorMessage &pem) {
 	return false;
 }
 
-// ListView‚Å‘I‘ğ’†‚ÌPacket‚ğƒZƒbƒg
+// ListViewã§é¸æŠä¸­ã®Packetã‚’ã‚»ãƒƒãƒˆ
 bool SetRawPacket(Alice &a, MessageHeader type, std::wstring &text_packet) {
 	if (text_packet.length() > 1024) {
 		return false;
@@ -223,7 +223,7 @@ bool OnCreate(Alice &a) {
 	return true;
 }
 
-// FX‚Èˆ—
+// è‰²ã€…ãªå‡¦ç†
 bool OnCommand(Alice &a, int nIDDlgItem) {
 	if (nIDDlgItem == BUTTON_CLEAR) {
 		ClearAll(); // logger
@@ -276,7 +276,7 @@ bool OnCommand(Alice &a, int nIDDlgItem) {
 	return true;
 }
 
-// ListViewã‚Å‘I‘ğ‚µ‚½ƒpƒPƒbƒg‚ğ“ü—Í—“‚ÉƒRƒs[
+// ListViewä¸Šã§é¸æŠã—ãŸãƒ‘ã‚±ãƒƒãƒˆã‚’å…¥åŠ›æ¬„ã«ã‚³ãƒ”ãƒ¼
 bool OnNotify(Alice &a, int nIDDlgItem) {
 	if (nIDDlgItem == LISTVIEW_LOGGER) {
 		std::wstring text_type;
@@ -334,7 +334,7 @@ Alice& GetMainGUI() {
 	return *global_a;
 }
 
-// I—¹ˆ—
+// çµ‚äº†å‡¦ç†
 LRESULT CALLBACK ExitCallback(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
 	if (Msg == WM_DESTROY) {
 		// format view
@@ -343,7 +343,7 @@ LRESULT CALLBACK ExitCallback(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 			CloseWindow(sub_hwnd);
 			DestroyWindow(sub_hwnd);
 		}
-		// ‹­§I—¹
+		// å¼·åˆ¶çµ‚äº†
 		ExitProcess(0);
 	}
 	return 0;

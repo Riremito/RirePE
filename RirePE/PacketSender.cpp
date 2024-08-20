@@ -1,4 +1,4 @@
-#include"../RirePE/MainGUI.h"
+﻿#include"../RirePE/MainGUI.h"
 
 bool CheckLetter(std::wstring wText) {
 	static std::wstring gLetterList = L"0123456789ABCDEFabcdef ?*";

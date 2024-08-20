@@ -1,4 +1,4 @@
-#include"../RirePE/MainGUI.h"
+﻿#include"../RirePE/MainGUI.h"
 
 typedef struct {
 	MessageHeader packet;

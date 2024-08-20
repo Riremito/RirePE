@@ -1,4 +1,4 @@
-#ifndef __PACKETLOGGER_H__
+﻿#ifndef __PACKETLOGGER_H__
 #define __PACKETLOGGER_H__
 
 typedef struct {

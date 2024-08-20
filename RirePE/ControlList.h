@@ -1,4 +1,4 @@
-#ifndef __CONTROL_H__
+﻿#ifndef __CONTROL_H__
 #define __CONTROL_H__
 
 enum SubControl {

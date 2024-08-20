@@ -1,4 +1,4 @@
-#ifndef __FILTERGUI_H__
+﻿#ifndef __FILTERGUI_H__
 #define __FILTERGUI_H__
 
 #define IG_WIDTH 400

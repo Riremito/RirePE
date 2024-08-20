@@ -1,4 +1,4 @@
-#ifndef __MAPLEPACKET_H__
+Ôªø#ifndef __MAPLEPACKET_H__
 #define __MAPLEPACKET_H__
 #include<Windows.h>
 #include<string>
@@ -33,7 +33,7 @@ typedef struct {
 	DWORD decoded; // starts from 0x04
 	BYTE padding[0x256];
 } InPacket;
-// BBëO
+// BBÂâç
 #elif MAPLE_VERSION <= 186
 typedef struct {
 	DWORD unk1; // 0x00
@@ -69,9 +69,9 @@ void SendPacket_Hook(void *pCClientSocket, OutPacket *p);
 void SendPacket_EH_Hook(OutPacket *p);
 
 // original functions
-extern void(*_COutPacket)(OutPacket *p, WORD w); // ÉwÉbÉ_ÇÃà√çÜâªÉ`ÉFÉbÉNóp
-extern void(*_SendPacket_EH)(OutPacket *p); // ÉwÉbÉ_ÇÃà√çÜâªóLå¯éûÇ…åƒÇ—èoÇ∑
-extern void(*_EnterSendPacket)(void *pCClientSocket, OutPacket *p); // ÉwÉbÉ_ÇÃà√çÜâªñ≥å¯éûÇ…åƒÇ—èoÇ∑
+extern void(*_COutPacket)(OutPacket *p, WORD w); // „Éò„ÉÉ„ÉÄ„ÅÆÊöóÂè∑Âåñ„ÉÅ„Çß„ÉÉ„ÇØÁî®
+extern void(*_SendPacket_EH)(OutPacket *p); // „Éò„ÉÉ„ÉÄ„ÅÆÊöóÂè∑ÂåñÊúâÂäπÊôÇ„Å´Âëº„Å≥Âá∫„Åô
+extern void(*_EnterSendPacket)(void *pCClientSocket, OutPacket *p); // „Éò„ÉÉ„ÉÄ„ÅÆÊöóÂè∑ÂåñÁÑ°ÂäπÊôÇ„Å´Âëº„Å≥Âá∫„Åô
 extern void(*_ProcessPacket)(void *pCClientSocket, InPacket *p);
 extern void* (*_CClientSocket)(void);
 #else

@@ -1,4 +1,4 @@
-#ifndef __PACKETEDITOR_H__
+ï»¿#ifndef __PACKETEDITOR_H__
 #define __PACKETEDITOR_H__
 
 #include<Windows.h>
@@ -62,18 +62,18 @@ typedef struct {
 	union {
 		// SEND or RECV
 		struct {
-			DWORD length; // ƒpƒPƒbƒg‚ÌƒTƒCƒY
-			BYTE packet[1]; // ƒpƒPƒbƒg
+			DWORD length; // ãƒ‘ã‚±ãƒƒãƒˆã®ã‚µã‚¤ã‚º
+			BYTE packet[1]; // ãƒ‘ã‚±ãƒƒãƒˆ
 		} Binary;
 		// Encode or Decode
 		struct {
-			DWORD pos; // Encode or Decode‚³‚ê‚½ˆÊ’u
-			DWORD size; // ƒTƒCƒY
+			DWORD pos; // Encode or Decodeã•ã‚ŒãŸä½ç½®
+			DWORD size; // ã‚µã‚¤ã‚º
 			FormatUpdate update;
 			BYTE data[1]; // packet buffer sometimes changed before reading it
 		} Extra;
-		// Encode or Decode Š®—¹’Ê’m
-		DWORD status; // ó‘Ô
+		// Encode or Decode å®Œäº†é€šçŸ¥
+		DWORD status; // çŠ¶æ…‹
 	};
 } PacketEditorMessage;
 #pragma pack(pop)

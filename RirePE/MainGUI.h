@@ -1,4 +1,4 @@
-#ifndef __MAINGUI_H__
+﻿#ifndef __MAINGUI_H__
 #define __MAINGUI_H__
 
 #include"../Share/Simple/Simple.h"

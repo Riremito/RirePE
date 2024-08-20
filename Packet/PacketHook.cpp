@@ -1,4 +1,4 @@
-#include"../Share/Simple/Simple.h"
+ï»¿#include"../Share/Simple/Simple.h"
 #include"../Share/Hook/SimpleHook.h"
 #include"../RirePE/RirePE.h"
 #include"../Packet/PacketHook.h"
@@ -40,13 +40,13 @@ bool RestartPipeClient() {
 
 // ShiftJIS to UTF16
 bool ShiftJIStoUTF8(std::string sjis, std::wstring &utf16) {
-	// UTF16‚Ö•ÏŠ·‚·‚éÛ‚Ì•K—v‚ÈƒoƒCƒg”‚ğæ“¾
+	// UTF16ã¸å¤‰æ›ã™ã‚‹éš›ã®å¿…è¦ãªãƒã‚¤ãƒˆæ•°ã‚’å–å¾—
 	int len = MultiByteToWideChar(932, 0, sjis.c_str(), -1, 0, 0);
 	if (!len) {
 		return false;
 	}
 
-	// UTF16‚Ö•ÏŠ·
+	// UTF16ã¸å¤‰æ›
 	std::vector<BYTE> b((len + 1) * sizeof(WORD));
 	if (!MultiByteToWideChar(932, 0, sjis.c_str(), -1, (WCHAR *)&b[0], len)) {
 		return false;
@@ -56,7 +56,7 @@ bool ShiftJIStoUTF8(std::string sjis, std::wstring &utf16) {
 	return true;
 }
 
-// ƒoƒCƒg”z—ñ‚©‚çShiftJIS•¶š—ñ‚ğæ“¾
+// ãƒã‚¤ãƒˆé…åˆ—ã‹ã‚‰ShiftJISæ–‡å­—åˆ—ã‚’å–å¾—
 bool BYTEtoShiftJIS(BYTE *text, size_t len, std::string &sjis) {
 	std::vector<BYTE> b(len + 1);
 	for (size_t i = 0; i < len; i++) {
@@ -103,15 +103,15 @@ char** (__thiscall *_DecodeStr)(InPacket *p, char **s);
 void(__thiscall *_DecodeBuffer)(InPacket *p, BYTE *b, DWORD len);
 #endif
 
-DWORD packet_id_out = (GetCurrentProcessId() << 16); // ‹ô”
-DWORD packet_id_in = (GetCurrentProcessId() << 16) + 1; // Šï”
+DWORD packet_id_out = (GetCurrentProcessId() << 16); // å¶æ•°
+DWORD packet_id_in = (GetCurrentProcessId() << 16) + 1; // å¥‡æ•°
 
 typedef struct {
-	DWORD id; // ƒpƒPƒbƒg¯•Êq
-	ULONGLONG addr; // ƒŠƒ^[ƒ“ƒAƒhƒŒƒX
-	MessageHeader fmt; // ƒtƒH[ƒ}ƒbƒg‚Ìí—Ş
-	DWORD pos; // êŠ
-	DWORD size; // ƒf[ƒ^‚Ì’·‚³
+	DWORD id; // ãƒ‘ã‚±ãƒƒãƒˆè­˜åˆ¥å­
+	ULONGLONG addr; // ãƒªã‚¿ãƒ¼ãƒ³ã‚¢ãƒ‰ãƒ¬ã‚¹
+	MessageHeader fmt; // ãƒ•ã‚©ãƒ¼ãƒãƒƒãƒˆã®ç¨®é¡
+	DWORD pos; // å ´æ‰€
+	DWORD size; // ãƒ‡ãƒ¼ã‚¿ã®é•·ã•
 	BYTE *data;
 	ULONG_PTR tracking;
 } PacketExtraInformation;
@@ -220,7 +220,7 @@ void AddSendPacket(OutPacket *p, ULONG_PTR addr, bool &bBlock) {
 	pem->addr = addr;
 	pem->Binary.length = p->encoded;
 	memcpy_s(pem->Binary.packet, p->encoded, p->packet, p->encoded);
-	CountUpPacketID(packet_id_out); // SendPacket‚ÆEnterSendPacket‚ª‚ ‚é‚Ì‚Å‚±‚±‚ÅƒJƒEƒ“ƒgƒAƒbƒv
+	CountUpPacketID(packet_id_out); // SendPacketã¨EnterSendPacketãŒã‚ã‚‹ã®ã§ã“ã“ã§ã‚«ã‚¦ãƒ³ãƒˆã‚¢ãƒƒãƒ—
 
 #ifdef _WIN64
 	if (p->header) {
@@ -331,11 +331,11 @@ BYTE bEnterSendPacket[] = {
 
 void(*_EnterSendPacket)(void *rcx, OutPacket *p) = (decltype(_EnterSendPacket))(ULONG_PTR)bEnterSendPacket;
 void SendPacket_Hook(void *rcx, OutPacket *p) {
-	// ƒwƒbƒ_‚ªˆÃ†‰»‚³‚ê‚éê‡‚Í•Ê‚Ì‚Æ‚±‚ë‚ÅƒƒO‚ğæ‚é‚½‚ß–³‹‚·‚é
+	// ãƒ˜ãƒƒãƒ€ãŒæš—å·åŒ–ã•ã‚Œã‚‹å ´åˆã¯åˆ¥ã®ã¨ã“ã‚ã§ãƒ­ã‚°ã‚’å–ã‚‹ãŸã‚ç„¡è¦–ã™ã‚‹
 	if (uSendPacket_EH_Ret != (ULONG_PTR)_ReturnAddress()) {
 		bool bBlock = false;
 		AddSendPacket(p, (ULONG_PTR)_ReturnAddress(), bBlock);
-		// ˆê•”ƒpƒPƒbƒg‚ª³í‚É‹L˜^o—ˆ‚È‚¢‚½‚ß‘—MÏ‚İ‚È‚±‚Æ‚ğ’Ê’m‚·‚é
+		// ä¸€éƒ¨ãƒ‘ã‚±ãƒƒãƒˆãŒæ­£å¸¸ã«è¨˜éŒ²å‡ºæ¥ãªã„ãŸã‚é€ä¿¡æ¸ˆã¿ãªã“ã¨ã‚’é€šçŸ¥ã™ã‚‹
 		packet_id_out++;
 		if (!bBlock) {
 			return _EnterSendPacket(rcx, p);
@@ -355,7 +355,7 @@ void SendPacket_EH_Hook(OutPacket *p) {
 }
 
 #else
-// æ‚ÉƒtƒH[ƒ}ƒbƒgî•ñ‚Í‘—M‚³‚ê‚é
+// å…ˆã«ãƒ•ã‚©ãƒ¼ãƒãƒƒãƒˆæƒ…å ±ã¯é€ä¿¡ã•ã‚Œã‚‹
 void __fastcall SendPacket_Hook(void *ecx, void *edx, OutPacket *p) {
 	if (uEnterSendPacket_ret != (ULONG_PTR)_ReturnAddress()) {
 		bool bBlock = false;
@@ -462,7 +462,7 @@ void __fastcall EncodeBuffer_Hook(OutPacket *p, void *edx, BYTE *b, DWORD len) {
 	return _EncodeBuffer(p, b, len);
 }
 
-// Œã‚©‚çƒtƒH[ƒ}ƒbƒgî•ñ‚Í‘—M‚³‚ê‚é
+// å¾Œã‹ã‚‰ãƒ•ã‚©ãƒ¼ãƒãƒƒãƒˆæƒ…å ±ã¯é€ä¿¡ã•ã‚Œã‚‹
 #ifdef _WIN64
 void ProcessPacket_Hook(void *pCClientSocket, InPacket *p) {
 #else

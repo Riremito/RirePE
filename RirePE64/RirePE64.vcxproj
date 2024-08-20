@@ -37,6 +37,9 @@
     <ClCompile Include="..\RirePE\PacketSender.cpp" />
     <ClCompile Include="..\RirePE\WinMain.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\.editorconfig" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{62E49245-74FD-49C2-8E41-285F5FF2606D}</ProjectGuid>

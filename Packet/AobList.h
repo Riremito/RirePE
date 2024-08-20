@@ -1,27 +1,27 @@
-#ifndef __AOB_LIST_H__
+ï»¿#ifndef __AOB_LIST_H__
 #define __AOB_LIST_H__
 
 #include<Windows.h>
 #include<string>
 
 /*
-	v20X‚©v30X‚ ‚½‚è‚©‚çPacket Sender‚Ì‘Îô‚ª’Ç‰Á‚³‚ê‚Ä‚¢‚Ü‚·
-		1) Thread ID‚ÌŠm”F, Main ThreadˆÈŠO‚©‚çSendPacket‚ğŒÄ‚Ño‚·‚ÆŒŸo‚³‚ê‚Ü‚·, Packet Sender‚ğg‚í‚È‚¢ŒÀ‚è‚Í‰ñ”ğ•s—v‚Å‚·
-		2) Return Address‚ÌŠm”F, SendPacket‚ªŒÄ‚Î‚ê‚½‚ÌReturn Address‚ªexe‚Ì”ÍˆÍŠO‚Ì‚¾‚ÆŒŸo‚³‚ê‚Ü‚·
-		3) Memory‚ÌŠm”F, Return Address - 0x05‚ªcall SendPacket‚Å‚È‚¢ê‡‚ÉŒŸo‚³‚ê‚Ü‚·
-		4) Memory‚ÌŠm”F, Return Adress‚ªret (0xC3)‚Ìê‡‚àŒŸo‚³‚ê‚Ü‚·
-		5) Return Address‚ÌŠm”F, SendPacket‚ªŒÄ‚Î‚ê‚½‚ÌReturn Address‚ªexe‚Ìthemida‚Ìvirtualizer‚Ì”ÍˆÍ“à‚¾‚Æ3, 4‚ª–³‹‚³‚ê‚Ü‚·
+	v20Xã‹v30Xã‚ãŸã‚Šã‹ã‚‰Packet Senderã®å¯¾ç­–ãŒè¿½åŠ ã•ã‚Œã¦ã„ã¾ã™
+		1) Thread IDã®ç¢ºèª, Main Threadä»¥å¤–ã‹ã‚‰SendPacketã‚’å‘¼ã³å‡ºã™ã¨æ¤œå‡ºã•ã‚Œã¾ã™, Packet Senderã‚’ä½¿ã‚ãªã„é™ã‚Šã¯å›é¿ä¸è¦ã§ã™
+		2) Return Addressã®ç¢ºèª, SendPacketãŒå‘¼ã°ã‚ŒãŸæ™‚ã®Return AddressãŒexeã®ç¯„å›²å¤–ã®ã ã¨æ¤œå‡ºã•ã‚Œã¾ã™
+		3) Memoryã®ç¢ºèª, Return Address - 0x05ãŒcall SendPacketã§ãªã„å ´åˆã«æ¤œå‡ºã•ã‚Œã¾ã™
+		4) Memoryã®ç¢ºèª, Return AdressãŒret (0xC3)ã®å ´åˆã‚‚æ¤œå‡ºã•ã‚Œã¾ã™
+		5) Return Addressã®ç¢ºèª, SendPacketãŒå‘¼ã°ã‚ŒãŸæ™‚ã®Return AddressãŒexeã®themidaã®virtualizerã®ç¯„å›²å†…ã ã¨3, 4ãŒç„¡è¦–ã•ã‚Œã¾ã™
 
-	ˆÈ‰º‚Ìƒƒ‚ƒŠ‚ğ’T‚µSendPacket‚ÌƒtƒbƒN‚É—˜—p‚µ‚Ü‚·
+	ä»¥ä¸‹ã®ãƒ¡ãƒ¢ãƒªã‚’æ¢ã—SendPacketã®ãƒ•ãƒƒã‚¯ã«åˆ©ç”¨ã—ã¾ã™
 		call SendPacket // Bypass Memory Check
 		add rsp,XX // Bypass Return Address Check, FakeReturn
 		ret
 
-	ƒtƒbƒN‚©‚ç_SendPacket‚ÌŒÄ‚Ño‚·‚Ì‘‚«•û
-		sub rsp,XX // “K“–‚É—˜—p‚µ‚½ˆ—‚ÅStack‚ª‚¸‚ê‚é•ª‚ğ–‘O‚É’²®‚µ‚Ü‚·
-		mov rax,FakeReturn // ‚±‚±‚ªRetun Address‚Æ‚È‚è‚Ü‚·
+	ãƒ•ãƒƒã‚¯ã‹ã‚‰_SendPacketã®å‘¼ã³å‡ºã™æ™‚ã®æ›¸ãæ–¹
+		sub rsp,XX // é©å½“ã«åˆ©ç”¨ã—ãŸå‡¦ç†ã§StackãŒãšã‚Œã‚‹åˆ†ã‚’äº‹å‰ã«èª¿æ•´ã—ã¾ã™
+		mov rax,FakeReturn // ã“ã“ãŒRetun Addressã¨ãªã‚Šã¾ã™
 		push rax
-		mov rax,_SendPacket // push + ret‚Å”CˆÓ‚ÌReturn Address‚ğİ’u‚µ‚½call‚ğÀs‚µ‚Ü‚·
+		mov rax,_SendPacket // push + retã§ä»»æ„ã®Return Addressã‚’è¨­ç½®ã—ãŸcallã‚’å®Ÿè¡Œã—ã¾ã™
 		push rax
 		ret
 */

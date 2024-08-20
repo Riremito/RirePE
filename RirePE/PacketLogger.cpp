@@ -1,4 +1,4 @@
-#include"../RirePE/MainGUI.h"
+ï»¿#include"../RirePE/MainGUI.h"
 std::vector<PacketData> packet_data_out;
 std::vector<PacketData> packet_data_in;
 
@@ -16,12 +16,12 @@ std::vector<PacketData>& GetInPacketFormat() {
 }
 
 bool AddFormat(PacketData &pd, PacketEditorMessage &pem) {
-	// ƒpƒPƒbƒgƒƒbƒNÏ‚İ
+	// ãƒ‘ã‚±ãƒƒãƒˆãƒ­ãƒƒã‚¯æ¸ˆã¿
 	if (pd.lock) {
 		return false;
 	}
 
-	// ƒpƒPƒbƒg‚Ì•œ†ŒŸo
+	// ãƒ‘ã‚±ãƒƒãƒˆã®å¾©å·æ¤œå‡º
 	if (pem.Extra.update == FORMAT_UPDATE) {
 		if (pem.Extra.pos + pem.Extra.size <= pd.packet.size()) {
 			for (auto &pf : pd.format) {
@@ -40,25 +40,25 @@ bool AddFormat(PacketData &pd, PacketEditorMessage &pem) {
 		return false;
 	}
 
-	// ƒpƒPƒbƒg‚ğ“o˜^
+	// ãƒ‘ã‚±ãƒƒãƒˆã‚’ç™»éŒ²
 	if (pem.header == SENDPACKET || pem.header == RECVPACKET) {
 		pd.packet.resize(pem.Binary.length);
 		memcpy_s(&pd.packet[0], pem.Binary.length, pem.Binary.packet, pem.Binary.length);
 		pd.addr = pem.addr;
 
-		// Send‚Ìê‡‚Íæ‚É‘S‚ÄEncode‚³‚êŒã‚©‚çƒpƒPƒbƒg‚ÌƒTƒCƒY‚ª”»–¾‚·‚é
+		// Sendã®å ´åˆã¯å…ˆã«å…¨ã¦Encodeã•ã‚Œå¾Œã‹ã‚‰ãƒ‘ã‚±ãƒƒãƒˆã®ã‚µã‚¤ã‚ºãŒåˆ¤æ˜ã™ã‚‹
 		if (pd.packet.size() && pd.packet.size() == pd.used) {
-			// ‘S‚Ä‚Ìƒf[ƒ^‚ª—˜—p‚³‚ê‚½
+			// å…¨ã¦ã®ãƒ‡ãƒ¼ã‚¿ãŒåˆ©ç”¨ã•ã‚ŒãŸ
 			if (pd.status == 0) {
 				pd.status = 1;
 			}
 		}
 
-		// ƒpƒPƒbƒgƒƒbƒN
+		// ãƒ‘ã‚±ãƒƒãƒˆãƒ­ãƒƒã‚¯
 		if (pem.header == SENDPACKET) {
 			pd.lock = TRUE;
 
-			// ––”ö‚É“äƒf[ƒ^‚ª‚ ‚éê‡
+			// æœ«å°¾ã«è¬ãƒ‡ãƒ¼ã‚¿ãŒã‚ã‚‹å ´åˆ
 			if (pd.used < pd.packet.size()) {
 				PacketFormat unk = {};
 				unk.type = WHEREFROM;
@@ -75,7 +75,7 @@ bool AddFormat(PacketData &pd, PacketEditorMessage &pem) {
 		return true;
 	}
 
-	// ƒpƒPƒbƒgƒƒbƒN
+	// ãƒ‘ã‚±ãƒƒãƒˆãƒ­ãƒƒã‚¯
 	if (pem.header == DECODE_END) {
 		pd.lock = TRUE;
 		if (pd.used < pd.packet.size()) {
@@ -90,7 +90,7 @@ bool AddFormat(PacketData &pd, PacketEditorMessage &pem) {
 		return true;
 	}
 
-	// ³í‚Édecode or encodeo—ˆ‚Ä‚¢‚È‚¢ê‡‚ÍŒŠ–„‚ß‚·‚é
+	// æ­£å¸¸ã«decode or encodeå‡ºæ¥ã¦ã„ãªã„å ´åˆã¯ç©´åŸ‹ã‚ã™ã‚‹
 	if (pd.used < pem.Extra.pos) {
 		PacketFormat unk = {};
 		unk.type = UNKNOWNDATA;
@@ -103,7 +103,7 @@ bool AddFormat(PacketData &pd, PacketEditorMessage &pem) {
 		return false;
 	}
 
-	// ƒtƒH[ƒ}ƒbƒg‚ğ“o˜^
+	// ãƒ•ã‚©ãƒ¼ãƒãƒƒãƒˆã‚’ç™»éŒ²
 	PacketFormat pf = {};
 	pf.type = pem.header;
 	pf.pos = pem.Extra.pos;
@@ -111,11 +111,11 @@ bool AddFormat(PacketData &pd, PacketEditorMessage &pem) {
 	pf.addr = pem.addr;
 	pd.format.push_back(pf);
 
-	// ó‘Ô‚ğ•ÏX
+	// çŠ¶æ…‹ã‚’å¤‰æ›´
 	pd.used += pf.size;
-	// Recv‚Ìê‡‚Íæ‚ÉƒpƒPƒbƒg‚ÌƒTƒCƒY‚ª•ª‚©‚Á‚Ä‚¢‚é
+	// Recvã®å ´åˆã¯å…ˆã«ãƒ‘ã‚±ãƒƒãƒˆã®ã‚µã‚¤ã‚ºãŒåˆ†ã‹ã£ã¦ã„ã‚‹
 	if (pd.packet.size() && pd.packet.size() == pd.used) {
-		// ‘S‚Ä‚Ìƒf[ƒ^‚ª—˜—p‚³‚ê‚½
+		// å…¨ã¦ã®ãƒ‡ãƒ¼ã‚¿ãŒåˆ©ç”¨ã•ã‚ŒãŸ
 		if (pd.status == 0) {
 			pd.status = 1;
 		}
@@ -162,7 +162,7 @@ bool AddSendPacket(PacketEditorMessage &pem) {
 	return true;
 }
 
-// ƒNƒ‰ƒCƒAƒ“ƒg‚©‚ç‚ÌƒpƒPƒbƒg‚Ìˆ—
+// ã‚¯ãƒ©ã‚¤ã‚¢ãƒ³ãƒˆã‹ã‚‰ã®ãƒ‘ã‚±ãƒƒãƒˆã®å‡¦ç†
 bool LoggerCommunicate(PipeServerThread& psh) {
 	SetInfo(L"Connected");
 

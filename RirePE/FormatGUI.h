@@ -1,4 +1,4 @@
-#ifndef __FORMATGUI_H__
+﻿#ifndef __FORMATGUI_H__
 #define __FORMATGUI_H__
 
 #define FV_WIDTH 800

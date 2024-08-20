@@ -1,4 +1,4 @@
-#include"../Share/Simple/Simple.h"
+﻿#include"../Share/Simple/Simple.h"
 #include"../Share/Hook/SimpleHook.h"
 #include"../Packet/PacketHook.h"
 #include"../RirePE/RirePE.h"

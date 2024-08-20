@@ -1,4 +1,4 @@
-#include"../RirePE/MainGUI.h"
+﻿#include"../RirePE/MainGUI.h"
 
 #ifndef _WIN64
 #define EXE_NAME L"RirePE"

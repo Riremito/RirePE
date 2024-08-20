@@ -1,4 +1,4 @@
-#include"../RirePE/MainGUI.h"
+ï»¿#include"../RirePE/MainGUI.h"
 
 Alice *global_fv = NULL;
 HINSTANCE hFVInstance = NULL;
@@ -146,7 +146,7 @@ std::wstring GetFormatType(PacketFormat &pf) {
 	{
 		return L"WStr2(" + std::to_wstring((pf.size - sizeof(WORD)) / 2) + L")";
 	}
-	// ƒGƒ‰[ˆ—
+	// ã‚¨ãƒ©ãƒ¼å‡¦ç†
 	case NOTUSED: {
 		return L"Not Used(" + std::to_wstring(pf.size) + L")";
 	}
@@ -163,13 +163,13 @@ std::wstring GetFormatType(PacketFormat &pf) {
 // ShiftJIS to UTF16
 bool ShiftJIStoUTF8(std::string sjis, std::wstring &utf16) {
 	try {
-		// UTF16‚Ö•ÏŠ·‚·‚éÛ‚Ì•K—v‚ÈƒoƒCƒg”‚ğæ“¾
+		// UTF16ã¸å¤‰æ›ã™ã‚‹éš›ã®å¿…è¦ãªãƒã‚¤ãƒˆæ•°ã‚’å–å¾—
 		int len = MultiByteToWideChar(CP_ACP, 0, sjis.c_str(), -1, 0, 0);
 		if (!len) {
 			return false;
 		}
 
-		// UTF16‚Ö•ÏŠ·
+		// UTF16ã¸å¤‰æ›
 		std::vector<BYTE> b((len + 1) * sizeof(WORD));
 		if (!MultiByteToWideChar(CP_ACP, 0, sjis.c_str(), -1, (WCHAR *)&b[0], len)) {
 			return false;
@@ -185,7 +185,7 @@ bool ShiftJIStoUTF8(std::string sjis, std::wstring &utf16) {
 	return true;
 }
 
-// ƒoƒCƒg”z—ñ‚©‚çShiftJIS•¶š—ñ‚ğæ“¾
+// ãƒã‚¤ãƒˆé…åˆ—ã‹ã‚‰ShiftJISæ–‡å­—åˆ—ã‚’å–å¾—
 bool BYTEtoShiftJIS(BYTE *text, size_t len, std::string &sjis) {
 	try {
 		std::vector<BYTE> b(len + 1);
@@ -261,7 +261,7 @@ std::wstring GetFormatData(PacketData &pd, PacketFormat &pf) {
 		std::wstring utf16 = std::wstring((WCHAR *)&pd.packet[pf.pos + sizeof(WORD)], *(WORD *)&pd.packet[pf.pos]);
 		return L"L\"" + utf16 + L"\"";
 	}
-	// ƒGƒ‰[ˆ—
+	// ã‚¨ãƒ©ãƒ¼å‡¦ç†
 	case NOTUSED:
 	case UNKNOWNDATA:
 	case WHEREFROM: {
@@ -402,7 +402,7 @@ bool SetExtraInfo_Old(std::vector<PacketData>& vpd, DWORD id) {
 					wText += L"Return = " + GetAddress(pf.addr) + L"\r\n";
 				//}
 				wText += L"Data = " + GetFormatData(pd, pf) + L"\r\n";
-				// ®”’l
+				// æ•´æ•°å€¤
 				//if (show_int) {
 					int val = 0;
 					if (GetIntData(pd, pf, val)) {
@@ -415,7 +415,7 @@ bool SetExtraInfo_Old(std::vector<PacketData>& vpd, DWORD id) {
 				count++;
 			}
 
-			// ƒIƒŠƒWƒiƒ‹ƒf[ƒ^
+			// ã‚ªãƒªã‚¸ãƒŠãƒ«ãƒ‡ãƒ¼ã‚¿
 			//if (show_raw) {
 				wText += L"\r\n";
 				wText += L"[Raw]\r\n";
@@ -521,7 +521,7 @@ std::wstring GetFormatType_MySrc(PacketData &pd, PacketFormat &pf) {
 	case TENVI_DECODE_WSTR_2: {
 		return L"EncodeWStr2" + argpart;
 	}
-	// ƒGƒ‰[ˆ—
+	// ã‚¨ãƒ©ãƒ¼å‡¦ç†
 	case NOTUSED: {
 		return L"Not Used(" + std::to_wstring(pf.size) + L")";
 	}

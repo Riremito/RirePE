@@ -1,4 +1,4 @@
-#include"../RirePE/MainGUI.h"
+﻿#include"../RirePE/MainGUI.h"
 
 int target_pid = 0;
 std::wstring GetPipeNameLogger() {
