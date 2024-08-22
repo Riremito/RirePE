@@ -3,15 +3,12 @@
 #include<Windows.h>
 #include<string>
 
-#ifdef _WIN64
-#define MAPLE_VERSION 403
-#else
-#define MAPLE_VERSION 186
-#endif
-
 #pragma pack(push, 1)
 // x64
-#if MAPLE_VERSION >= 403
+#ifdef _WIN64
+#define MAPLE_VERSION 425
+
+#if MAPLE_VERSION <= 414
 typedef struct {
 	DWORD unk1; // 0x00
 	DWORD unk2; // 0x01
@@ -33,8 +30,33 @@ typedef struct {
 	DWORD decoded; // starts from 0x04
 	BYTE padding[0x256];
 } InPacket;
+#else
+// TWMS v263, JMS v425
+typedef struct {
+	DWORD unk1;
+	DWORD unk2;
+	BYTE packet[0x418]; // +0x8
+	DWORD unk3;
+	DWORD unk4;
+	DWORD encoded; // +0x428
+	DWORD unk5;
+	WORD header;
+	BYTE padding[0x256];
+} OutPacket;
+
+typedef struct {
+	DWORD unk1;
+	DWORD unk2;
+	BYTE *packet;
+	DWORD fullsize;
+	DWORD header;
+	DWORD size;
+	DWORD decoded;
+	BYTE padding[0x256];
+} InPacket;
+#endif
+#else
 // BB前
-#elif MAPLE_VERSION <= 186
 typedef struct {
 	DWORD unk1; // 0x00
 	BYTE *packet;
@@ -53,8 +75,6 @@ typedef struct {
 	WORD unk7; // ??
 	DWORD decoded; // from 0x04 to decoded
 } InPacket;
-#else
-// TODO
 #endif
 #pragma pack(pop)
 

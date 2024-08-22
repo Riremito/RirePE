@@ -226,11 +226,6 @@ void AddSendPacket(OutPacket *p, ULONG_PTR addr, bool &bBlock) {
 	if (p->header) {
 		*(WORD *)&pem->Binary.packet[0] = p->header;
 	}
-
-	// BlackCipher HearBeat
-	if (*(WORD *)&pem->Binary.packet[0] == 0x0066) {
-		DEBUG(DatatoString(pem->Binary.packet, p->encoded, true));
-	}
 #endif
 
 	if (!pc->Send(b, sizeof(PacketEditorMessage) + p->encoded)) {
@@ -643,8 +638,6 @@ bool PacketHook_Thread(HINSTANCE hinstDLL) {
 
 	//ULONG_PTR uSendPacket = 0;
 	ULONG_PTR uProcessPacket = 0;
-
-	/*
 #ifdef _WIN64
 	ULONG_PTR uSendPacket = 0;
 	ULONG_PTR uCClientSocket = 0;
@@ -667,6 +660,13 @@ bool PacketHook_Thread(HINSTANCE hinstDLL) {
 		uCClientSocket += *(signed long int *)(uCClientSocket + 0x01) + 0x05;
 		_CClientSocket = (decltype(_CClientSocket))uCClientSocket;
 		DEBUG(L"uCClientSocket = " + QWORDtoString(uCClientSocket));
+
+		// TWMS v263.3 bandaid fix, tools lib does not support this function hooking because this has call code near start address of the function.
+		if (uSendPacket_EH == 0x1422BE740) {
+			r.Patch(0x1422BE749, L"90 90 90 90 90 E9 98 00 00 00"); // move call to other place
+			r.Patch(0x1422BE7EB, L"FF 15 E5 FE FF FF 48 89 44 24 30 E9 58 FF FF FF"); // recreate call code and overwritten code
+			r.Patch(0x1422BE6D6, L"60 30 25 40 01 00 00 00"); // call addr
+		}
 
 		SHookFunction(SendPacket_EH, uSendPacket_EH);
 }
@@ -691,6 +691,7 @@ bool PacketHook_Thread(HINSTANCE hinstDLL) {
 	if (uSendPacket) {
 #endif
 		AOBHook(COutPacket);
+		/*
 #ifndef _WIN64
 		// old version
 		if (!_COutPacket) {
@@ -705,11 +706,10 @@ bool PacketHook_Thread(HINSTANCE hinstDLL) {
 #endif
 		AOBHook(EncodeStr);
 		AOBHook(EncodeBuffer);
+		*/
 	}
-	*/
 
 	AOBHookWithResult(ProcessPacket);
-
 	if (uProcessPacket) {
 		AOBHook(Decode1);
 		AOBHook(Decode2);

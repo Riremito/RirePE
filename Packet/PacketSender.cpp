@@ -22,16 +22,17 @@ VOID CALLBACK PacketInjector(HWND, UINT, UINT_PTR, DWORD) {
 		COutPacket_Hook(&p, wHeader);
 
 		WORD wEncryptedHeader = *(WORD *)&p.packet[0];
-
+		p.encoded = (DWORD)pcm->Binary.length;
+#if MAPLE_VERSION <= 414
+		p.packet = &pcm->Binary.packet[0];
+#else
+		memcpy_s(&p.packet[0], pcm->Binary.length, &pcm->Binary.packet[0], pcm->Binary.length);
+#endif
 		if (wHeader != wEncryptedHeader) {
-			p.packet = &pcm->Binary.packet[0];
-			p.encoded = (DWORD)pcm->Binary.length;
 			*(WORD *)&p.packet[0] = wEncryptedHeader;
 			SendPacket_EH_Hook(&p);
 		}
 		else {
-			p.packet = &pcm->Binary.packet[0];
-			p.encoded = (DWORD)pcm->Binary.length;
 			SendPacket_Hook(_CClientSocket(), &p);
 		}
 #else

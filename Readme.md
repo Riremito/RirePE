@@ -1,6 +1,7 @@
 # RirePE
 + Packet Editor
 + tested versions
+	+ TWMS v263.3
 	+ JMS v164.0, v186.0, v188.0, v207.0, v302.0
 	+ v409.2, v414.1
 	+ v20x client has SendPacket Hook detection and send packet detection, it is also bypassed
