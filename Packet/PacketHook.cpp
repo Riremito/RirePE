@@ -277,12 +277,6 @@ void AddRecvPacket(InPacket *p, ULONG_PTR addr, bool &bBlock) {
 	pem->Binary.length = p->length2;
 	memcpy_s(pem->Binary.packet, p->length2, &p->packet[4], p->length2);
 #endif
-#ifdef _WIN64
-	// BlackCipher HearBeat
-	if (*(WORD *)&pem->Binary.packet[0] == 0x0017) {
-		DEBUG(DatatoString(pem->Binary.packet, p->size, true));
-	}
-#endif
 
 #ifdef _WIN64
 	if (!pc->Send(b, sizeof(PacketEditorMessage) + p->size)) {
@@ -650,6 +644,7 @@ bool PacketHook_Thread(HINSTANCE hinstDLL) {
 	//ULONG_PTR uSendPacket = 0;
 	ULONG_PTR uProcessPacket = 0;
 
+	/*
 #ifdef _WIN64
 	ULONG_PTR uSendPacket = 0;
 	ULONG_PTR uCClientSocket = 0;
@@ -711,6 +706,7 @@ bool PacketHook_Thread(HINSTANCE hinstDLL) {
 		AOBHook(EncodeStr);
 		AOBHook(EncodeBuffer);
 	}
+	*/
 
 	AOBHookWithResult(ProcessPacket);
 
@@ -724,7 +720,6 @@ bool PacketHook_Thread(HINSTANCE hinstDLL) {
 		AOBHook(DecodeStr);
 		AOBHook(DecodeBuffer);
 	}
-
 
 	std::wstring wDir;
 	if (GetDir(wDir, hinstDLL)) {
