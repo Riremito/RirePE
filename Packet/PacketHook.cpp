@@ -152,6 +152,7 @@ void AddExtra(PacketExtraInformation &pxi) {
 
 	if (!pc->Send(b, sizeof(PacketEditorMessage) + pxi.size)) {
 		RestartPipeClient();
+		pc->Send(b, sizeof(PacketEditorMessage) + pxi.size); // retry
 	}
 
 	delete pem;
@@ -174,6 +175,7 @@ void ClearQueue(OutPacket *p) {
 }
 
 void AddQueue(PacketExtraInformation &pxi) {
+	//DEBUG(L"debug... ID : " + std::to_wstring(pxi.id) + L", " + std::to_wstring(pxi.pos) + L", " + std::to_wstring(pxi.size));
 	list_pei.push_back(pxi);
 }
 
