@@ -1,4 +1,4 @@
-#ifndef __FILTERGUI_H__
+﻿#ifndef __FILTERGUI_H__
 #define __FILTERGUI_H__
 
 #define IG_WIDTH 400
@@ -36,5 +36,8 @@ bool InitFilterGUI(HINSTANCE hInstance);
 bool OpenFilterGUI();
 bool CheckFilter(PacketEditorMessage &pem, FilterType &ft);
 bool SetFilterHeader(MessageHeader type, std::wstring wHeader);
+bool AutoIgnore(PacketEditorMessage &pem);
+bool LoadFilterList(MessageHeader mh, FilterType ft, std::wstring Input);
+bool GetFilterList(MessageHeader mh, FilterType ft, std::wstring &wOutput);
 
 #endif

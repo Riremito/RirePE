@@ -1,4 +1,4 @@
-#include"../RirePE/MainGUI.h"
+ï»¿#include"../RirePE/MainGUI.h"
 
 Alice *global_fv = NULL;
 HINSTANCE hFVInstance = NULL;
@@ -146,7 +146,7 @@ std::wstring GetFormatType(PacketFormat &pf) {
 	{
 		return L"WStr2(" + std::to_wstring((pf.size - sizeof(WORD)) / 2) + L")";
 	}
-	// ƒGƒ‰[ˆ—
+	// ã‚¨ãƒ©ãƒ¼å‡¦ç†
 	case NOTUSED: {
 		return L"Not Used(" + std::to_wstring(pf.size) + L")";
 	}
@@ -163,13 +163,13 @@ std::wstring GetFormatType(PacketFormat &pf) {
 // ShiftJIS to UTF16
 bool ShiftJIStoUTF8(std::string sjis, std::wstring &utf16) {
 	try {
-		// UTF16‚Ö•ÏŠ·‚·‚éÛ‚Ì•K—v‚ÈƒoƒCƒg”‚ğæ“¾
+		// UTF16ã¸å¤‰æ›ã™ã‚‹éš›ã®å¿…è¦ãªãƒã‚¤ãƒˆæ•°ã‚’å–å¾—
 		int len = MultiByteToWideChar(CP_ACP, 0, sjis.c_str(), -1, 0, 0);
 		if (!len) {
 			return false;
 		}
 
-		// UTF16‚Ö•ÏŠ·
+		// UTF16ã¸å¤‰æ›
 		std::vector<BYTE> b((len + 1) * sizeof(WORD));
 		if (!MultiByteToWideChar(CP_ACP, 0, sjis.c_str(), -1, (WCHAR *)&b[0], len)) {
 			return false;
@@ -185,7 +185,7 @@ bool ShiftJIStoUTF8(std::string sjis, std::wstring &utf16) {
 	return true;
 }
 
-// ƒoƒCƒg”z—ñ‚©‚çShiftJIS•¶š—ñ‚ğæ“¾
+// ãƒã‚¤ãƒˆé…åˆ—ã‹ã‚‰ShiftJISæ–‡å­—åˆ—ã‚’å–å¾—
 bool BYTEtoShiftJIS(BYTE *text, size_t len, std::string &sjis) {
 	try {
 		std::vector<BYTE> b(len + 1);
@@ -247,7 +247,7 @@ std::wstring GetFormatData(PacketData &pd, PacketFormat &pf) {
 	case TENVI_ENCODE_HEADER_1:
 	case TENVI_DECODE_HEADER_1:
 	{
-		return L"@" + BYTEtoString(pd.packet[pf.pos]);
+		return BYTEtoString(pd.packet[pf.pos]);
 	}
 	case TENVI_ENCODE_WSTR_1:
 	case TENVI_DECODE_WSTR_1:
@@ -261,7 +261,7 @@ std::wstring GetFormatData(PacketData &pd, PacketFormat &pf) {
 		std::wstring utf16 = std::wstring((WCHAR *)&pd.packet[pf.pos + sizeof(WORD)], *(WORD *)&pd.packet[pf.pos]);
 		return L"L\"" + utf16 + L"\"";
 	}
-	// ƒGƒ‰[ˆ—
+	// ã‚¨ãƒ©ãƒ¼å‡¦ç†
 	case NOTUSED:
 	case UNKNOWNDATA:
 	case WHEREFROM: {
@@ -279,19 +279,19 @@ bool GetIntData(PacketData &pd, PacketFormat &pf, int &val) {
 	case ENCODE1:
 	case DECODE1:
 	{
-		val = (int)pd.packet[pf.pos];
+		val = (int)(signed char)pd.packet[pf.pos];
 		return true;
 	}
 	case ENCODE2:
 	case DECODE2:
 	{
-		val = (int)*(WORD *)&pd.packet[pf.pos];
+		val = (int)*(signed short *)&pd.packet[pf.pos];
 		return true;
 	}
 	case ENCODE4:
 	case DECODE4:
 	{
-		val = (int)(*(DWORD *)&pd.packet[pf.pos]);
+		val = (int)(*(signed long int *)&pd.packet[pf.pos]);
 		return true;
 	}
 	default: {
@@ -357,7 +357,7 @@ bool UpdateFV(PacketData &pd) {
 }
 
 // TextArea
-bool SetExtraInfo(std::vector<PacketData>& vpd, DWORD id) {
+bool SetExtraInfo_Old(std::vector<PacketData>& vpd, DWORD id) {
 	if (global_fv) {
 		// dead
 		if (!global_fv->IsAlive()) {
@@ -402,7 +402,7 @@ bool SetExtraInfo(std::vector<PacketData>& vpd, DWORD id) {
 					wText += L"Return = " + GetAddress(pf.addr) + L"\r\n";
 				//}
 				wText += L"Data = " + GetFormatData(pd, pf) + L"\r\n";
-				// ®”’l
+				// æ•´æ•°å€¤
 				//if (show_int) {
 					int val = 0;
 					if (GetIntData(pd, pf, val)) {
@@ -415,12 +415,163 @@ bool SetExtraInfo(std::vector<PacketData>& vpd, DWORD id) {
 				count++;
 			}
 
-			// ƒIƒŠƒWƒiƒ‹ƒf[ƒ^
+			// ã‚ªãƒªã‚¸ãƒŠãƒ«ãƒ‡ãƒ¼ã‚¿
 			//if (show_raw) {
 				wText += L"\r\n";
 				wText += L"[Raw]\r\n";
 				wText += L"Raw = " + DatatoString(&pd.packet[0], pd.packet.size(), true) + L"\r\n";
 			//}
+
+			global_fv->SetText(FV_EDIT_INFO, wText);
+			UpdateFV(pd);
+			return true;
+		}
+	}
+
+	global_fv->SetText(FV_EDIT_INFO, L"no data");
+	return false;
+}
+
+// server sided
+std::wstring GetFormatType_MySrc(PacketData &pd, PacketFormat &pf) {
+	int val = 0;
+	bool isint = GetIntData(pd, pf, val);
+
+	std::wstring argpart;
+
+	if (ENCODE_BEGIN <= pf.type && pf.type <= ENCODE_END)
+	{
+		// OutPacket to ClientPacket decoder
+		if (!isint) {
+			argpart = L"(); // " + GetFormatData(pd, pf) + L", " + GetAddress(pf.addr);
+		}
+		else {
+			argpart = L"(); // " + std::to_wstring(val) + L", " + GetAddress(pf.addr);
+		}
+	}
+	else {
+		// InPacket to ServerPacket encoder
+		if (!isint) {
+			argpart = L"(" + GetFormatData(pd, pf) + L"); // " + GetAddress(pf.addr);
+		}
+		else {
+			argpart = L"(#" + std::to_wstring(val) + L"); // " + GetAddress(pf.addr);
+		}
+	}
+
+	switch (pf.type) {
+	case ENCODEHEADER:
+	case DECODEHEADER:
+	case TENVI_ENCODE_HEADER_1:
+	case TENVI_DECODE_HEADER_1:
+	{
+		return L"Header" + argpart;
+	}
+	case ENCODE1:
+	{
+		return L"p.Decode1" + argpart;
+	}
+	case DECODE1:
+	{
+		return L"Encode1" + argpart;
+	}
+	case ENCODE2:
+	{
+		return L"p.Decode2" + argpart;
+	}
+	case DECODE2:
+	{
+		return L"Encode2" + argpart;
+	}
+	case ENCODE4:
+	{
+		return L"p.Decode4" + argpart;
+	}
+	case DECODE4:
+	{
+		return L"Encode4" + argpart;
+	}
+	case ENCODE8:
+	{
+		return L"p.Decode8" + argpart;
+	}
+	case DECODE8:
+	{
+		return L"Encode8" + argpart;
+	}
+	case ENCODESTR:
+	{
+		return L"p.DecodeStr" + argpart;
+	}
+	case DECODESTR:
+	{
+		return L"EncodeStr" + argpart;
+	}
+	case ENCODEBUFFER:
+	{
+		return L"p.DecodeBuffer" + argpart;
+	}
+	case DECODEBUFFER:
+	{
+		return L"EncodeBuffer" + argpart;
+	}
+	case TENVI_DECODE_WSTR_1: {
+		return L"EncodeWStr1" + argpart;
+	}
+	case TENVI_DECODE_WSTR_2: {
+		return L"EncodeWStr2" + argpart;
+	}
+	// ã‚¨ãƒ©ãƒ¼å‡¦ç†
+	case NOTUSED: {
+		return L"Not Used(" + std::to_wstring(pf.size) + L")";
+	}
+	case UNKNOWNDATA: {
+		return L"Unknown(" + std::to_wstring(pf.size) + L")";
+	}
+	case WHEREFROM: {
+		return L"Not Encoded(" + std::to_wstring(pf.size) + L")";
+	}
+	}
+	return L"Error";
+}
+
+bool SetExtraInfo(std::vector<PacketData>& vpd, DWORD id) {
+	if (global_fv) {
+		// dead
+		if (!global_fv->IsAlive()) {
+			return false;
+		}
+	}
+	else {
+		// not opened
+		return false;
+	}
+
+	for (auto &pd : vpd) {
+		if (pd.id == id) {
+			std::wstring wText;
+			wText += L"[Basic]\r\n";
+			wText += L"Status = " + GetPacketStatus(pd) + L"\r\n";
+			wText += L"Type = " + GetPacketType(pd) + L"\r\n";
+
+			if (pd.packet.size() == 0) {
+				global_fv->SetText(FV_EDIT_INFO, L"size is 0 ?");
+				return false;
+			}
+
+			wText += L"\r\n";
+			wText += L"[Format]\r\n";
+			int count = 0;
+			size_t prev_pos = 0;
+			for (auto &pf : pd.format) {
+				if (pf.pos < prev_pos) {
+					wText += L"Something broken\r\n";
+					break;
+				}
+				prev_pos = pf.pos;
+				wText += GetFormatType_MySrc(pd, pf) + L"\r\n";
+				count++;
+			}
 
 			global_fv->SetText(FV_EDIT_INFO, wText);
 			UpdateFV(pd);

@@ -1,4 +1,4 @@
-#include"../RirePE/MainGUI.h"
+﻿#include"../RirePE/MainGUI.h"
 
 typedef struct {
 	MessageHeader packet;
@@ -212,6 +212,50 @@ bool AddFilter(Alice &a, int nIDDlgItem, PacketFilter &pf) {
 	return true;
 }
 
+bool AutoIgnore(PacketEditorMessage &pem) {
+	if (pem.header != SENDPACKET && pem.header != RECVPACKET) {
+		return false;
+	}
+
+	int header_size = GetHeaderSize();
+
+	if (pem.Binary.length < (DWORD)header_size) {
+		return false;
+	}
+
+	DWORD header = 0;
+	switch (header_size) {
+	case 1: {
+		header = (DWORD)pem.Binary.packet[0];
+		break;
+	}
+	case 2: {
+		header = (DWORD)*(WORD *)&pem.Binary.packet[0];
+		break;
+	}
+	case 4: {
+		header = *(DWORD *)&pem.Binary.packet[0];
+		break;
+	}
+	default:
+	{
+		return false;
+	}
+	}
+
+	for (auto &v : filter_list) {
+		if (v.packet == pem.header && v.header_size == header_size) {
+			if (v.header == header) {
+				return false;
+			}
+		}
+	}
+
+	PacketFilter pf = { pem.header, IGNORE_PACKET, header, header_size };
+	filter_list.push_back(pf);
+	return true;
+}
+
 bool DeleteFilter(Alice &a, int nIDDlgItem, MessageHeader type) {
 	PacketFilter pf = { type };
 	if (!GetHeader(a, nIDDlgItem, pf.header)) {
@@ -318,6 +362,77 @@ bool OpenFilterGUI() {
 	global_ig->SetOnCommand(IGOnCommand);
 	global_ig->SetOnNotify(IGOnNotify);
 	global_ig->Run();
+	return true;
+}
+
+std::vector<std::wstring> hsplit(std::wstring& src, const wchar_t* delim = L"|") {
+	std::vector<std::wstring> vec;
+	std::wstring::size_type len = src.length();
+
+	for (std::wstring::size_type i = 0, n; i < len; i = n + 1) {
+		n = src.find_first_of(delim, i);
+		if (n == std::wstring::npos) {
+			n = len;
+		}
+		vec.push_back(src.substr(i, n - i));
+	}
+
+	return vec;
+}
+
+bool LoadFilterList(MessageHeader mh, FilterType ft, std::wstring Input) {
+	int header_size = GetHeaderSize();
+
+	if (GetHeaderSize() != 2) {
+		return false;
+	}
+
+	DWORD header = 0;
+	std::vector<std::wstring> header_list = hsplit(Input);
+
+	for (auto &v : header_list) {
+		if (swscanf_s(v.c_str(), L"@%04X", &header)) {
+			PacketFilter pf = { mh, ft, header, header_size };
+			filter_list.push_back(pf);
+		}
+	}
+
+	return true;
+}
+
+bool GetFilterList(MessageHeader mh, FilterType ft, std::wstring &wOutput) {
+	wOutput = L"";
+	for (auto &v : filter_list) {
+		if (v.packet == mh && v.filter == ft) {
+			if (wOutput.length()) {
+				wOutput += L"|";
+			}
+
+			std::wstring wHeader = L"@";
+			switch (v.header_size) {
+			case 1: {
+				wHeader += BYTEtoString((BYTE)v.header);
+				break;
+			}
+			case 2: {
+				wHeader += WORDtoString((WORD)v.header);
+				break;
+			}
+			case 4: {
+				wHeader += DWORDtoString(v.header);
+				break;
+			}
+			default:
+			{
+				wHeader = L"Error";
+				break;
+			}
+			}
+
+			wOutput += wHeader;
+		}
+	}
+
 	return true;
 }
 

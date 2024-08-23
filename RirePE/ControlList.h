@@ -1,4 +1,4 @@
-#ifndef __CONTROL_H__
+﻿#ifndef __CONTROL_H__
 #define __CONTROL_H__
 
 enum SubControl {
@@ -19,6 +19,8 @@ enum SubControl {
 	CHECK_LOCK,
 	BUTTON_INC_SEND,
 	BUTTON_INC_RECV,
+	CHECK_AUTO_IGNORE,
+	BUTTON_SAVE_CONFIG,
 };
 
 enum ListViewIndex {

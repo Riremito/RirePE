@@ -1,4 +1,4 @@
-#include"../Share/Simple/Simple.h"
+Ôªø#include"../Share/Simple/Simple.h"
 #include"../Share/Hook/SimpleHook.h"
 #include"../RirePE/RirePE.h"
 #include"../Packet/PacketHook.h"
@@ -7,11 +7,27 @@
 #include<intrin.h>
 #pragma intrinsic(_ReturnAddress)
 
+int target_pid = 0;
+std::wstring GetPipeNameLogger() {
+	if (target_pid) {
+		return PE_LOGGER_PIPE_NAME + std::to_wstring(target_pid);
+	}
+	return PE_LOGGER_PIPE_NAME;
+}
+
+std::wstring GetPipeNameSender() {
+	if (target_pid) {
+		return PE_SENDER_PIPE_NAME + std::to_wstring(target_pid);
+	}
+	return PE_SENDER_PIPE_NAME;
+}
+
+
 PipeClient *pc = NULL;
 CRITICAL_SECTION cs;
 
 bool StartPipeClient() {
-	pc = new PipeClient(PE_LOGGER_PIPE_NAME);
+	pc = new PipeClient(GetPipeNameLogger());
 	return pc->Run();
 }
 
@@ -24,13 +40,13 @@ bool RestartPipeClient() {
 
 // ShiftJIS to UTF16
 bool ShiftJIStoUTF8(std::string sjis, std::wstring &utf16) {
-	// UTF16Ç÷ïœä∑Ç∑ÇÈç€ÇÃïKóvÇ»ÉoÉCÉgêîÇéÊìæ
+	// UTF16„Å∏Â§âÊèõ„Åô„ÇãÈöõ„ÅÆÂøÖË¶Å„Å™„Éê„Ç§„ÉàÊï∞„ÇíÂèñÂæó
 	int len = MultiByteToWideChar(932, 0, sjis.c_str(), -1, 0, 0);
 	if (!len) {
 		return false;
 	}
 
-	// UTF16Ç÷ïœä∑
+	// UTF16„Å∏Â§âÊèõ
 	std::vector<BYTE> b((len + 1) * sizeof(WORD));
 	if (!MultiByteToWideChar(932, 0, sjis.c_str(), -1, (WCHAR *)&b[0], len)) {
 		return false;
@@ -40,7 +56,7 @@ bool ShiftJIStoUTF8(std::string sjis, std::wstring &utf16) {
 	return true;
 }
 
-// ÉoÉCÉgîzóÒÇ©ÇÁShiftJISï∂éöóÒÇéÊìæ
+// „Éê„Ç§„ÉàÈÖçÂàó„Åã„ÇâShiftJISÊñáÂ≠óÂàó„ÇíÂèñÂæó
 bool BYTEtoShiftJIS(BYTE *text, size_t len, std::string &sjis) {
 	std::vector<BYTE> b(len + 1);
 	for (size_t i = 0; i < len; i++) {
@@ -71,7 +87,8 @@ char** (*_DecodeStr)(InPacket *p, char **s);
 void(*_DecodeBuffer)(InPacket *p, BYTE *b, DWORD len);
 #else
 void(__thiscall *_SendPacket)(void *ecx, OutPacket *p);
-void(__thiscall *_COutPacket)(OutPacket *p, WORD w);
+void(__thiscall *_COutPacket)(OutPacket *p, WORD w) = NULL;
+void(__thiscall *_COutPacket_Old)(OutPacket *p, WORD w, DWORD dw) = NULL;
 void(__thiscall *_Encode1)(OutPacket *p, BYTE b);
 void(__thiscall *_Encode2)(OutPacket *p, WORD w);
 void(__thiscall *_Encode4)(OutPacket *p, DWORD dw);
@@ -86,16 +103,17 @@ char** (__thiscall *_DecodeStr)(InPacket *p, char **s);
 void(__thiscall *_DecodeBuffer)(InPacket *p, BYTE *b, DWORD len);
 #endif
 
-DWORD packet_id_out = 0; // ãÙêî
-DWORD packet_id_in = 1; // äÔêî
+DWORD packet_id_out = (GetCurrentProcessId() << 16); // ÂÅ∂Êï∞
+DWORD packet_id_in = (GetCurrentProcessId() << 16) + 1; // Â•áÊï∞
 
 typedef struct {
-	DWORD id; // ÉpÉPÉbÉgéØï éq
-	ULONGLONG addr; // ÉäÉ^Å[ÉìÉAÉhÉåÉX
-	MessageHeader fmt; // ÉtÉHÅ[É}ÉbÉgÇÃéÌóﬁ
-	DWORD pos; // èÍèä
-	DWORD size; // ÉfÅ[É^ÇÃí∑Ç≥
+	DWORD id; // „Éë„Ç±„ÉÉ„ÉàË≠òÂà•Â≠ê
+	ULONGLONG addr; // „É™„Çø„Éº„É≥„Ç¢„Éâ„É¨„Çπ
+	MessageHeader fmt; // „Éï„Ç©„Éº„Éû„ÉÉ„Éà„ÅÆÁ®ÆÈ°û
+	DWORD pos; // Â†¥ÊâÄ
+	DWORD size; // „Éá„Éº„Çø„ÅÆÈï∑„Åï
 	BYTE *data;
+	ULONG_PTR tracking;
 } PacketExtraInformation;
 
 DWORD CountUpPacketID(DWORD &id) {
@@ -134,13 +152,58 @@ void AddExtra(PacketExtraInformation &pxi) {
 
 	if (!pc->Send(b, sizeof(PacketEditorMessage) + pxi.size)) {
 		RestartPipeClient();
+		pc->Send(b, sizeof(PacketEditorMessage) + pxi.size); // retry
 	}
 
 	delete pem;
 	LeaveCriticalSection(&cs);
 }
 
+// for SendPacket format
+std::vector<PacketExtraInformation> list_pei;
+
+void ClearQueue(OutPacket *p) {
+	auto itr = list_pei.begin();
+	while (itr != list_pei.end()) {
+		if (itr->tracking == (ULONG_PTR)p) {
+			itr = list_pei.erase(itr);
+		}
+		else {
+			itr++;
+		}
+	}
+}
+
+void AddQueue(PacketExtraInformation &pxi) {
+	//DEBUG(L"debug... ID : " + std::to_wstring(pxi.id) + L", " + std::to_wstring(pxi.pos) + L", " + std::to_wstring(pxi.size));
+	list_pei.push_back(pxi);
+}
+
+void AddExtraAll(OutPacket *p) {
+	for (auto &pei : list_pei) {
+		// check tracking id (struct addr)
+		if (pei.tracking == (ULONG_PTR)p) {
+			pei.id = packet_id_out; // fix
+			AddExtra(pei);
+			pei.tracking = 0;
+		}
+	}
+	//DEBUG(L"list_st = " + std::to_wstring(list_pei.size()));
+
+	auto itr = list_pei.begin();
+	while (itr != list_pei.end()) {
+		if (itr->tracking == 0) {
+			itr = list_pei.erase(itr);
+		}
+		else {
+			itr++;
+		}
+	}
+	//DEBUG(L"list_rm = " + std::to_wstring(list_pei.size()));
+}
+
 void AddSendPacket(OutPacket *p, ULONG_PTR addr, bool &bBlock) {
+	AddExtraAll(p);
 	EnterCriticalSection(&cs);
 	union {
 		PacketEditorMessage *pem;
@@ -159,16 +222,11 @@ void AddSendPacket(OutPacket *p, ULONG_PTR addr, bool &bBlock) {
 	pem->addr = addr;
 	pem->Binary.length = p->encoded;
 	memcpy_s(pem->Binary.packet, p->encoded, p->packet, p->encoded);
-	CountUpPacketID(packet_id_out); // SendPacketÇ∆EnterSendPacketÇ™Ç†ÇÈÇÃÇ≈Ç±Ç±Ç≈ÉJÉEÉìÉgÉAÉbÉv
+	CountUpPacketID(packet_id_out); // SendPacket„Å®EnterSendPacket„Åå„ÅÇ„Çã„ÅÆ„Åß„Åì„Åì„Åß„Ç´„Ç¶„É≥„Éà„Ç¢„ÉÉ„Éó
 
 #ifdef _WIN64
 	if (p->header) {
 		*(WORD *)&pem->Binary.packet[0] = p->header;
-	}
-
-	// BlackCipher HearBeat
-	if (*(WORD *)&pem->Binary.packet[0] == 0x0066) {
-		DEBUG(DatatoString(pem->Binary.packet, p->encoded, true));
 	}
 #endif
 
@@ -215,12 +273,6 @@ void AddRecvPacket(InPacket *p, ULONG_PTR addr, bool &bBlock) {
 #else
 	pem->Binary.length = p->length2;
 	memcpy_s(pem->Binary.packet, p->length2, &p->packet[4], p->length2);
-#endif
-#ifdef _WIN64
-	// BlackCipher HearBeat
-	if (*(WORD *)&pem->Binary.packet[0] == 0x0017) {
-		DEBUG(DatatoString(pem->Binary.packet, p->size, true));
-	}
 #endif
 
 #ifdef _WIN64
@@ -270,11 +322,11 @@ BYTE bEnterSendPacket[] = {
 
 void(*_EnterSendPacket)(void *rcx, OutPacket *p) = (decltype(_EnterSendPacket))(ULONG_PTR)bEnterSendPacket;
 void SendPacket_Hook(void *rcx, OutPacket *p) {
-	// ÉwÉbÉ_Ç™à√çÜâªÇ≥ÇÍÇÈèÍçáÇÕï ÇÃÇ∆Ç±ÇÎÇ≈ÉçÉOÇéÊÇÈÇΩÇﬂñ≥éãÇ∑ÇÈ
+	// „Éò„ÉÉ„ÉÄ„ÅåÊöóÂè∑Âåñ„Åï„Çå„ÇãÂ†¥Âêà„ÅØÂà•„ÅÆ„Å®„Åì„Çç„Åß„É≠„Ç∞„ÇíÂèñ„Çã„Åü„ÇÅÁÑ°Ë¶ñ„Åô„Çã
 	if (uSendPacket_EH_Ret != (ULONG_PTR)_ReturnAddress()) {
 		bool bBlock = false;
 		AddSendPacket(p, (ULONG_PTR)_ReturnAddress(), bBlock);
-		// àÍïîÉpÉPÉbÉgÇ™ê≥èÌÇ…ãLò^èoóàÇ»Ç¢ÇΩÇﬂëóêMçœÇ›Ç»Ç±Ç∆Çí ímÇ∑ÇÈ
+		// ‰∏ÄÈÉ®„Éë„Ç±„ÉÉ„Éà„ÅåÊ≠£Â∏∏„Å´Ë®òÈå≤Âá∫Êù•„Å™„ÅÑ„Åü„ÇÅÈÄÅ‰ø°Ê∏à„Åø„Å™„Åì„Å®„ÇíÈÄöÁü•„Åô„Çã
 		packet_id_out++;
 		if (!bBlock) {
 			return _EnterSendPacket(rcx, p);
@@ -294,7 +346,7 @@ void SendPacket_EH_Hook(OutPacket *p) {
 }
 
 #else
-// êÊÇ…ÉtÉHÅ[É}ÉbÉgèÓïÒÇÕëóêMÇ≥ÇÍÇÈ
+// ÂÖà„Å´„Éï„Ç©„Éº„Éû„ÉÉ„ÉàÊÉÖÂ†±„ÅØÈÄÅ‰ø°„Åï„Çå„Çã
 void __fastcall SendPacket_Hook(void *ecx, void *edx, OutPacket *p) {
 	if (uEnterSendPacket_ret != (ULONG_PTR)_ReturnAddress()) {
 		bool bBlock = false;
@@ -307,25 +359,32 @@ void __fastcall SendPacket_Hook(void *ecx, void *edx, OutPacket *p) {
 }
 #endif
 
-bool IGNORE_PACKET = false; // ñ≥éã
-void(__thiscall *_WriteTempPacket)(void *ecx) = 0;
-void __fastcall WriteTempPacket_Hook(void *ecx, void *edx) {
-	IGNORE_PACKET = true;
-	_WriteTempPacket(ecx);
-	IGNORE_PACKET = false;
-}
-
 #ifdef _WIN64
 void COutPacket_Hook(OutPacket *p, WORD w) {
 #else
 void __fastcall  COutPacket_Hook(OutPacket *p, void *edx, WORD w) {
 #endif
-	if (!IGNORE_PACKET) {
-		PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODEHEADER, 0, sizeof(WORD) };
-		AddExtra(pxi);
+	PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODEHEADER, 0, sizeof(WORD), 0, (ULONG_PTR)p };
+	ClearQueue(p);
+	AddQueue(pxi);
+
+#ifndef _WIN64
+	if (!_COutPacket && _COutPacket_Old) {
+		return _COutPacket_Old(p, w, 0);
 	}
+#endif
 	return _COutPacket(p, w);
 }
+
+#ifndef _WIN64
+// v131.0
+void __fastcall  COutPacket_Old_Hook(OutPacket *p, void *edx, WORD w, DWORD dw) {
+	PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODEHEADER, 0, sizeof(WORD), 0, (ULONG_PTR)p };
+	ClearQueue(p);
+	AddQueue(pxi);
+	return _COutPacket_Old(p, w, dw);
+}
+#endif
 
 #ifdef _WIN64
 void Encode1_Hook(OutPacket *p, BYTE b) {
@@ -333,10 +392,8 @@ void Encode1_Hook(OutPacket *p, BYTE b) {
 void __fastcall Encode1_Hook(OutPacket *p, void *edx, BYTE b) {
 #endif
 	if (p->encoded) {
-		if (!IGNORE_PACKET) {
-			PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODE1, p->encoded, sizeof(BYTE) };
-			AddExtra(pxi);
-		}
+		PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODE1, p->encoded, sizeof(BYTE), 0, (ULONG_PTR)p };
+		AddQueue(pxi);
 	}
 	return _Encode1(p, b);
 }
@@ -347,10 +404,8 @@ void Encode2_Hook(OutPacket *p, WORD w) {
 void __fastcall Encode2_Hook(OutPacket *p, void *edx, WORD w) {
 #endif
 	if (p->encoded) {
-		if (!IGNORE_PACKET) {
-			PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODE2, p->encoded, sizeof(WORD) };
-			AddExtra(pxi);
-		}
+		PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODE2, p->encoded, sizeof(WORD), 0, (ULONG_PTR)p };
+		AddQueue(pxi);
 	}
 	return _Encode2(p, w);
 
@@ -361,17 +416,15 @@ void Encode4_Hook(OutPacket *p, DWORD dw) {
 #else
 void __fastcall Encode4_Hook(OutPacket *p, void *edx, DWORD dw) {
 #endif
-	if (!IGNORE_PACKET) {
-		PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODE4, p->encoded, sizeof(DWORD) };
-		AddExtra(pxi);
-	}
+	PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODE4, p->encoded, sizeof(DWORD), 0, (ULONG_PTR)p };
+	AddQueue(pxi);
 	return _Encode4(p, dw);
 }
 
 #ifdef _WIN64
 void Encode8_Hook(OutPacket *p, ULONG_PTR u) {
-	PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODE8, p->encoded, sizeof(ULONG_PTR) };
-	AddExtra(pxi);
+	PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODE8, p->encoded, sizeof(ULONG_PTR), 0, (ULONG_PTR)p };
+	AddQueue(pxi);
 	return _Encode8(p, u);
 }
 #endif
@@ -381,14 +434,12 @@ void EncodeStr_Hook(OutPacket *p, void *s) {
 #else
 void __fastcall EncodeStr_Hook(OutPacket *p, void *edx, char *s) {
 #endif
-	if (!IGNORE_PACKET) {
 #ifdef _WIN64
-		PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODESTR, p->encoded, sizeof(WORD) + *(DWORD *)(*(ULONG_PTR *)s - 0x04) };
+	PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODESTR, p->encoded, sizeof(WORD) + *(DWORD *)(*(ULONG_PTR *)s - 0x04), 0, (ULONG_PTR)p };
 #else
-		PacketExtraInformation pxi = { packet_id_out, (DWORD)_ReturnAddress(), ENCODESTR, p->encoded, sizeof(WORD) + strlen(s) };
+	PacketExtraInformation pxi = { packet_id_out, (DWORD)_ReturnAddress(), ENCODESTR, p->encoded, sizeof(WORD) + strlen(s), 0, (ULONG_PTR)p };
 #endif
-		AddExtra(pxi);
-	}
+	AddQueue(pxi);
 	return _EncodeStr(p, s);
 }
 
@@ -397,14 +448,12 @@ void EncodeBuffer_Hook(OutPacket *p, BYTE *b, DWORD len) {
 #else
 void __fastcall EncodeBuffer_Hook(OutPacket *p, void *edx, BYTE *b, DWORD len) {
 #endif
-	if (!IGNORE_PACKET) {
-		PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODEBUFFER, p->encoded, len };
-		AddExtra(pxi);
-	}
+	PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODEBUFFER, p->encoded, len, 0, (ULONG_PTR)p };
+	AddQueue(pxi);
 	return _EncodeBuffer(p, b, len);
 }
 
-// å„Ç©ÇÁÉtÉHÅ[É}ÉbÉgèÓïÒÇÕëóêMÇ≥ÇÍÇÈ
+// Âæå„Åã„Çâ„Éï„Ç©„Éº„Éû„ÉÉ„ÉàÊÉÖÂ†±„ÅØÈÄÅ‰ø°„Åï„Çå„Çã
 #ifdef _WIN64
 void ProcessPacket_Hook(void *pCClientSocket, InPacket *p) {
 #else
@@ -585,59 +634,23 @@ bool ScannerEnterSendPacket_188(ULONG_PTR uAddress) {
 }
 #endif
 
-bool ListScan(Rosemary &r, ULONG_PTR &result, std::wstring aob[], size_t count, int &used) {
-	result = 0; // scan result
-	used = -1; // which aob is used
-	for (size_t i = 0; i < count; i++) {
-		result = r.Scan(aob[i]);
-		if (result) {
-			used = (int)i;
-			return true;
-		}
-	}
-	return false;
-}
-
-#define HOOKDEBUG(func) \
-{\
-	ListScan(r, u##func, AOB_##func, _countof(AOB_##func), iWorkingAob);\
-	DEBUG(L""#func" = " + QWORDtoString(u##func) + L", Aob = " + std::to_wstring(iWorkingAob));\
-	if (iWorkingAob > -1) {\
-		SHookFunction(func, u##func);\
-	}\
-}
-
-bool PacketHook_Thread() {
+bool PacketHook_Thread(HINSTANCE hinstDLL) {
 	InitializeCriticalSection(&cs);
 	Rosemary r;
 
 	//ULONG_PTR uSendPacket = 0;
 	ULONG_PTR uProcessPacket = 0;
-	ULONG_PTR uCOutPacket = 0;
-	ULONG_PTR uEncode1 = 0;
-	ULONG_PTR uEncode2 = 0;
-	ULONG_PTR uEncode4 = 0;
-	ULONG_PTR uEncodeStr = 0;
-	ULONG_PTR uEncodeBuffer = 0;
-	ULONG_PTR uDecode1 = 0;
-	ULONG_PTR uDecode2 = 0;
-	ULONG_PTR uDecode4 = 0;
-	ULONG_PTR uDecodeStr = 0;
-	ULONG_PTR uDecodeBuffer = 0;
-	int iWorkingAob = 0; // do not change name
-
 #ifdef _WIN64
 	ULONG_PTR uSendPacket = 0;
-	ULONG_PTR uSendPacket_EH = 0;
-	ULONG_PTR uEncode8 = 0;
-	ULONG_PTR uDecode8 = 0;
 	ULONG_PTR uCClientSocket = 0;
 #endif
 
-	HOOKDEBUG(SendPacket);
+	AOBHookWithResult(SendPacket);
 
 #ifdef _WIN64
-	HOOKDEBUG(SendPacket_EH);
+	size_t iWorkingAob = -1;
+	ULONG_PTR uSendPacket_EH = r.Scan(AOB_SendPacket_EH, _countof(AOB_SendPacket_EH), iWorkingAob);
+	SCANRES(uSendPacket_EH);
 
 	if (uSendPacket && uSendPacket_EH) {
 		uSendPacket_EH_Ret = uSendPacket_EH + Offset_SendPacket_EH_Ret[iWorkingAob];
@@ -649,6 +662,15 @@ bool PacketHook_Thread() {
 		uCClientSocket += *(signed long int *)(uCClientSocket + 0x01) + 0x05;
 		_CClientSocket = (decltype(_CClientSocket))uCClientSocket;
 		DEBUG(L"uCClientSocket = " + QWORDtoString(uCClientSocket));
+
+		// TWMS v263.3 bandaid fix, tools lib does not support this function hooking because this has call code near start address of the function.
+		if (uSendPacket_EH == 0x1422BE740) {
+			r.Patch(0x1422BE749, L"90 90 90 90 90 E9 98 00 00 00"); // move call to other place
+			r.Patch(0x1422BE7EB, L"FF 15 E5 FE FF FF 48 89 44 24 30 E9 58 FF FF FF"); // recreate call code and overwritten code
+			r.Patch(0x1422BE6D6, L"60 30 25 40 01 00 00 00"); // call addr
+		}
+
+		SHookFunction(SendPacket_EH, uSendPacket_EH);
 }
 #else
 	if (uSendPacket) {
@@ -670,33 +692,44 @@ bool PacketHook_Thread() {
 #else
 	if (uSendPacket) {
 #endif
-		HOOKDEBUG(COutPacket);
-		HOOKDEBUG(Encode1);
-		HOOKDEBUG(Encode2);
-		HOOKDEBUG(Encode4);
-#ifdef _WIN64
-		HOOKDEBUG(Encode8);
-#endif
-		HOOKDEBUG(EncodeStr);
-		HOOKDEBUG(EncodeBuffer);
-
+		AOBHook(COutPacket);
 #ifndef _WIN64
-		ULONG_PTR uWriteTempPacket = 0;
-		HOOKDEBUG(WriteTempPacket);
+		// old version
+		if (!_COutPacket) {
+			AOBHook(COutPacket_Old);
+		}
 #endif
+		AOBHook(Encode1);
+		AOBHook(Encode2);
+		AOBHook(Encode4);
+#ifdef _WIN64
+		AOBHook(Encode8);
+#endif
+		AOBHook(EncodeStr);
+		AOBHook(EncodeBuffer);
 	}
 
-	HOOKDEBUG(ProcessPacket);
-
+	AOBHookWithResult(ProcessPacket);
 	if (uProcessPacket) {
-		HOOKDEBUG(Decode1);
-		HOOKDEBUG(Decode2);
-		HOOKDEBUG(Decode4);
+		AOBHook(Decode1);
+		AOBHook(Decode2);
+		AOBHook(Decode4);
 #ifdef _WIN64
-		HOOKDEBUG(Decode8);
+		AOBHook(Decode8);
 #endif
-		HOOKDEBUG(DecodeStr);
-		HOOKDEBUG(DecodeBuffer);
+		AOBHook(DecodeStr);
+		AOBHook(DecodeBuffer);
+	}
+
+	std::wstring wDir;
+	if (GetDir(wDir, hinstDLL)) {
+		target_pid = GetCurrentProcessId();
+		std::wstring param = std::to_wstring(target_pid) + L" MapleStoryClass";
+#ifndef _WIN64
+		ShellExecuteW(NULL, NULL, (wDir + L"\\RirePE.exe").c_str(), param.c_str(), wDir.c_str(), SW_SHOW);
+#else
+		ShellExecuteW(NULL, NULL, (wDir + L"\\RirePE64.exe").c_str(), param.c_str(), wDir.c_str(), SW_SHOW);
+#endif
 	}
 
 	StartPipeClient();
@@ -705,8 +738,8 @@ bool PacketHook_Thread() {
 }
 
 
-bool PacketHook() {
-	HANDLE hThread = CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)PacketHook_Thread, NULL, NULL, NULL);
+bool PacketHook(HINSTANCE hinstDLL) {
+	HANDLE hThread = CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)PacketHook_Thread, hinstDLL, NULL, NULL);
 
 	if (hThread) {
 		CloseHandle(hThread);

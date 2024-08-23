@@ -64,9 +64,7 @@ Global
 		{92BCAA26-D741-4637-9923-5B5E4BE3D704}.Debug|x86.ActiveCfg = Debug|Win32
 		{92BCAA26-D741-4637-9923-5B5E4BE3D704}.Debug|x86.Build.0 = Debug|Win32
 		{92BCAA26-D741-4637-9923-5B5E4BE3D704}.Release|x64.ActiveCfg = Release|Win32
-		{92BCAA26-D741-4637-9923-5B5E4BE3D704}.Release|x64.Build.0 = Release|Win32
 		{92BCAA26-D741-4637-9923-5B5E4BE3D704}.Release|x86.ActiveCfg = Release|Win32
-		{92BCAA26-D741-4637-9923-5B5E4BE3D704}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

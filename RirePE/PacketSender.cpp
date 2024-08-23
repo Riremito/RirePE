@@ -1,4 +1,4 @@
-#include"../RirePE/MainGUI.h"
+﻿#include"../RirePE/MainGUI.h"
 
 bool CheckLetter(std::wstring wText) {
 	static std::wstring gLetterList = L"0123456789ABCDEFabcdef ?*";
@@ -65,7 +65,7 @@ bool StringtoBYTE(std::wstring wText, std::vector<BYTE> &vData) {
 }
 
 bool PacketSender(Alice &a, MessageHeader type) {
-	PipeClient pc(PE_SENDER_PIPE_NAME);
+	PipeClient pc(GetPipeNameSender());
 	if (!pc.Run()) {
 		return false;
 	}

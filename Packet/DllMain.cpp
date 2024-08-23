@@ -1,9 +1,9 @@
-#include"../Packet/PacketHook.h"
+﻿#include"../Packet/PacketHook.h"
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
 	if (fdwReason == DLL_PROCESS_ATTACH) {
 		DisableThreadLibraryCalls(hinstDLL);
-		PacketHook();
+		PacketHook(hinstDLL);
 	}
 	return TRUE;
 }

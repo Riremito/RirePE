@@ -1,16 +1,14 @@
-#ifndef __MAPLEPACKET_H__
+ï»¿#ifndef __MAPLEPACKET_H__
 #define __MAPLEPACKET_H__
 #include<Windows.h>
-
-#ifdef _WIN64
-#define MAPLE_VERSION 403
-#else
-#define MAPLE_VERSION 186
-#endif
+#include<string>
 
 #pragma pack(push, 1)
 // x64
-#if MAPLE_VERSION >= 403
+#ifdef _WIN64
+#define MAPLE_VERSION 425
+
+#if MAPLE_VERSION <= 414
 typedef struct {
 	DWORD unk1; // 0x00
 	DWORD unk2; // 0x01
@@ -32,8 +30,33 @@ typedef struct {
 	DWORD decoded; // starts from 0x04
 	BYTE padding[0x256];
 } InPacket;
-// BB‘O
-#elif MAPLE_VERSION <= 186
+#else
+// TWMS v263, JMS v425
+typedef struct {
+	DWORD unk1;
+	DWORD unk2;
+	BYTE packet[0x418]; // +0x8
+	DWORD unk3;
+	DWORD unk4;
+	DWORD encoded; // +0x428
+	DWORD unk5;
+	WORD header;
+	BYTE padding[0x256];
+} OutPacket;
+
+typedef struct {
+	DWORD unk1;
+	DWORD unk2;
+	BYTE *packet;
+	DWORD fullsize;
+	DWORD header;
+	DWORD size;
+	DWORD decoded;
+	BYTE padding[0x256];
+} InPacket;
+#endif
+#else
+// BBå‰
 typedef struct {
 	DWORD unk1; // 0x00
 	BYTE *packet;
@@ -52,12 +75,10 @@ typedef struct {
 	WORD unk7; // ??
 	DWORD decoded; // from 0x04 to decoded
 } InPacket;
-#else
-// TODO
 #endif
 #pragma pack(pop)
 
-bool PacketHook();
+bool PacketHook(HINSTANCE hinstDLL);
 bool SetCallBack();
 bool RunPacketSender();
 
@@ -68,9 +89,9 @@ void SendPacket_Hook(void *pCClientSocket, OutPacket *p);
 void SendPacket_EH_Hook(OutPacket *p);
 
 // original functions
-extern void(*_COutPacket)(OutPacket *p, WORD w); // ƒwƒbƒ_‚ÌˆÃ†‰»ƒ`ƒFƒbƒN—p
-extern void(*_SendPacket_EH)(OutPacket *p); // ƒwƒbƒ_‚ÌˆÃ†‰»—LŒøŽž‚ÉŒÄ‚Ño‚·
-extern void(*_EnterSendPacket)(void *pCClientSocket, OutPacket *p); // ƒwƒbƒ_‚ÌˆÃ†‰»–³ŒøŽž‚ÉŒÄ‚Ño‚·
+extern void(*_COutPacket)(OutPacket *p, WORD w); // ãƒ˜ãƒƒãƒ€ã®æš—å·åŒ–ãƒã‚§ãƒƒã‚¯ç”¨
+extern void(*_SendPacket_EH)(OutPacket *p); // ãƒ˜ãƒƒãƒ€ã®æš—å·åŒ–æœ‰åŠ¹æ™‚ã«å‘¼ã³å‡ºã™
+extern void(*_EnterSendPacket)(void *pCClientSocket, OutPacket *p); // ãƒ˜ãƒƒãƒ€ã®æš—å·åŒ–ç„¡åŠ¹æ™‚ã«å‘¼ã³å‡ºã™
 extern void(*_ProcessPacket)(void *pCClientSocket, InPacket *p);
 extern void* (*_CClientSocket)(void);
 #else
@@ -83,5 +104,8 @@ extern ULONG_PTR uEnterSendPacket_ret;
 void EnterSendPacket_Hook(OutPacket *p);
 ULONG_PTR GetCClientSocket();
 #endif
+
+std::wstring GetPipeNameLogger();
+std::wstring GetPipeNameSender();
 
 #endif

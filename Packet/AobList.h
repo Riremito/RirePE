@@ -1,27 +1,27 @@
-#ifndef __AOB_LIST_H__
+ï»¿#ifndef __AOB_LIST_H__
 #define __AOB_LIST_H__
 
 #include<Windows.h>
 #include<string>
 
 /*
-	v20X‚©v30X‚ ‚½‚è‚©‚çPacket Sender‚Ì‘Îô‚ª’Ç‰Á‚³‚ê‚Ä‚¢‚Ü‚·
-		1) Thread ID‚ÌŠm”F, Main ThreadˆÈŠO‚©‚çSendPacket‚ğŒÄ‚Ño‚·‚ÆŒŸo‚³‚ê‚Ü‚·, Packet Sender‚ğg‚í‚È‚¢ŒÀ‚è‚Í‰ñ”ğ•s—v‚Å‚·
-		2) Return Address‚ÌŠm”F, SendPacket‚ªŒÄ‚Î‚ê‚½‚ÌReturn Address‚ªexe‚Ì”ÍˆÍŠO‚Ì‚¾‚ÆŒŸo‚³‚ê‚Ü‚·
-		3) Memory‚ÌŠm”F, Return Address - 0x05‚ªcall SendPacket‚Å‚È‚¢ê‡‚ÉŒŸo‚³‚ê‚Ü‚·
-		4) Memory‚ÌŠm”F, Return Adress‚ªret (0xC3)‚Ìê‡‚àŒŸo‚³‚ê‚Ü‚·
-		5) Return Address‚ÌŠm”F, SendPacket‚ªŒÄ‚Î‚ê‚½‚ÌReturn Address‚ªexe‚Ìthemida‚Ìvirtualizer‚Ì”ÍˆÍ“à‚¾‚Æ3, 4‚ª–³‹‚³‚ê‚Ü‚·
+	v20Xã‹v30Xã‚ãŸã‚Šã‹ã‚‰Packet Senderã®å¯¾ç­–ãŒè¿½åŠ ã•ã‚Œã¦ã„ã¾ã™
+		1) Thread IDã®ç¢ºèª, Main Threadä»¥å¤–ã‹ã‚‰SendPacketã‚’å‘¼ã³å‡ºã™ã¨æ¤œå‡ºã•ã‚Œã¾ã™, Packet Senderã‚’ä½¿ã‚ãªã„é™ã‚Šã¯å›é¿ä¸è¦ã§ã™
+		2) Return Addressã®ç¢ºèª, SendPacketãŒå‘¼ã°ã‚ŒãŸæ™‚ã®Return AddressãŒexeã®ç¯„å›²å¤–ã®ã ã¨æ¤œå‡ºã•ã‚Œã¾ã™
+		3) Memoryã®ç¢ºèª, Return Address - 0x05ãŒcall SendPacketã§ãªã„å ´åˆã«æ¤œå‡ºã•ã‚Œã¾ã™
+		4) Memoryã®ç¢ºèª, Return AdressãŒret (0xC3)ã®å ´åˆã‚‚æ¤œå‡ºã•ã‚Œã¾ã™
+		5) Return Addressã®ç¢ºèª, SendPacketãŒå‘¼ã°ã‚ŒãŸæ™‚ã®Return AddressãŒexeã®themidaã®virtualizerã®ç¯„å›²å†…ã ã¨3, 4ãŒç„¡è¦–ã•ã‚Œã¾ã™
 
-	ˆÈ‰º‚Ìƒƒ‚ƒŠ‚ğ’T‚µSendPacket‚ÌƒtƒbƒN‚É—˜—p‚µ‚Ü‚·
+	ä»¥ä¸‹ã®ãƒ¡ãƒ¢ãƒªã‚’æ¢ã—SendPacketã®ãƒ•ãƒƒã‚¯ã«åˆ©ç”¨ã—ã¾ã™
 		call SendPacket // Bypass Memory Check
 		add rsp,XX // Bypass Return Address Check, FakeReturn
 		ret
 
-	ƒtƒbƒN‚©‚ç_SendPacket‚ÌŒÄ‚Ño‚·‚Ì‘‚«•û
-		sub rsp,XX // “K“–‚É—˜—p‚µ‚½ˆ—‚ÅStack‚ª‚¸‚ê‚é•ª‚ğ–‘O‚É’²®‚µ‚Ü‚·
-		mov rax,FakeReturn // ‚±‚±‚ªRetun Address‚Æ‚È‚è‚Ü‚·
+	ãƒ•ãƒƒã‚¯ã‹ã‚‰_SendPacketã®å‘¼ã³å‡ºã™æ™‚ã®æ›¸ãæ–¹
+		sub rsp,XX // é©å½“ã«åˆ©ç”¨ã—ãŸå‡¦ç†ã§StackãŒãšã‚Œã‚‹åˆ†ã‚’äº‹å‰ã«èª¿æ•´ã—ã¾ã™
+		mov rax,FakeReturn // ã“ã“ãŒRetun Addressã¨ãªã‚Šã¾ã™
 		push rax
-		mov rax,_SendPacket // push + ret‚Å”CˆÓ‚ÌReturn Address‚ğİ’u‚µ‚½call‚ğÀs‚µ‚Ü‚·
+		mov rax,_SendPacket // push + retã§ä»»æ„ã®Return Addressã‚’è¨­ç½®ã—ãŸcallã‚’å®Ÿè¡Œã—ã¾ã™
 		push rax
 		ret
 */
@@ -29,11 +29,13 @@
 // Send Hook
 std::wstring AOB_SendPacket[] = {
 	#ifdef _WIN64
-	// v414.1 1st result
-	L"48 89 54 24 10 48 89 4C 24 08 56 57 48 81 EC 18 03 00 00 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 00 03 00 00 E9",
+	// JMS v414.1 and TWMS v263.3, 1422C1F40 1st result
+	L"48 89 54 24 10 48 89 4C 24 08 56 57 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? E9",
 	// v410.2 from v403.1
 	L"48 89 54 24 10 48 89 4C 24 08 56 57 48 81 EC ?? ?? ?? ?? 48 C7 84 24 ?? ?? ?? ?? FE FF FF FF 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? E9",
 	#else
+	// v131.0
+	L"B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 EC 10 53 56 8B F1 8D 9E ?? ?? ?? ?? 8B CB 89 5D F0 E8 ?? ?? ?? ?? 8B 46 10 33 C9 3B C1 89 4D FC 0F 84",
 	// v164.0 to v186.1
 	L"B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 EC 10 53 56 8B F1 8D 9E 80 00 00 00 57 8B CB 89 5D F0 E8 ?? ?? ?? ?? 8B 46 0C 33 FF 3B C7",
 	// v188.0 to v302.0
@@ -43,6 +45,8 @@ std::wstring AOB_SendPacket[] = {
 
 #ifdef _WIN64
 std::wstring AOB_SendPacket_EH[] = {
+	// TWMS v263.3, 1422BE740
+	L"48 89 4C 24 08 48 83 EC ?? E8 ?? ?? ?? ?? 48 89 44 24 ?? 48 8B 44 24 ?? 8B 80 ?? ?? ?? ?? 89 44 24 ?? 8B 54 24 ?? 48 8B 4C 24 ?? E8 ?? ?? ?? ?? 48 8B 44 24 ?? 8B 88 ?? ?? ?? ?? E8 ?? ?? ?? ?? 0F B6 C0 85 C0 75 17 48 8B 44 24 ?? 8B 88 ?? ?? ?? ?? E8 ?? ?? ?? ?? 0F B6 C0 85 C0 74 27 E8 ?? ?? ?? ?? 48 89 44 24 ?? 48 8B 44 24 ?? 8B 80 ?? ?? ?? ?? 89 44 24 ?? 8B 54 24 ?? 48 8B 4C 24 ?? E8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 89 44 24 ?? 48 83 7C 24 ?? 00 74 0F 48 8B 54 24 ?? 48 8B 4C 24 ?? E8",
 	// v414.1
 	L"48 89 4C 24 08 48 83 EC 48 E8 ?? ?? ?? ?? 48 89 44 24 30 48 8B 44 24 50 8B 40 1C 89 44 24 20 8B 54 24 20 48 8B 4C 24 30 E8 ?? ?? ?? ?? E8",
 	// v410.2
@@ -52,6 +56,8 @@ std::wstring AOB_SendPacket_EH[] = {
 };
 
 DWORD Offset_SendPacket_EH_Ret[] = {
+	// TWMS v263.3
+	0xA6,
 	// v414.1
 	0x4E,
 	// v410.2
@@ -61,6 +67,8 @@ DWORD Offset_SendPacket_EH_Ret[] = {
 };
 
 DWORD Offset_SendPacket_EH_CClientSocket[] = {
+	// TWMS v263.3
+	0x85,
 	// v414.1
 	0x2D,
 	// older
@@ -80,6 +88,10 @@ std::wstring AOB_EnterSendPacket[] = {
 // Recv Hook
 std::wstring AOB_ProcessPacket[] = {
 	#ifdef _WIN64
+	// TWMS v263.3, 1422C4450 by chuichui
+	L"48 89 54 24 10 48 89 4C 24 08 48 81 EC ?? ?? ?? ?? 48 ?? ?? ?? ?? ?? ?? 48 33 C4 48 ?? ?? ?? ?? ?? ?? ?? 48 8D 4C 24 34 E8",
+	// v425.2, 141F0ABB0 by chuichui
+	L"48 89 54 24 10 48 89 4C 24 08 48 81 EC ?? ?? ?? ?? 48 ?? ?? ?? ?? ?? ?? 48 33 C4 48 ?? ?? ?? ?? ?? ?? ?? E8 ?? ?? ?? ?? 0F B6 C0 85 C0 75 05 E9 ?? ?? ?? ?? E9",
 	// v414.1
 	L"48 89 54 24 10 48 89 4C 24 08 48 81 EC ?? ?? ?? ?? E8 ?? ?? ?? ?? 0F B6 C0 85 C0 75 05 E9 ?? ?? ?? ?? E9",
 	// v410.2
@@ -87,6 +99,8 @@ std::wstring AOB_ProcessPacket[] = {
 	// v403.1
 	L"48 89 54 24 10 48 89 4C 24 08 56 57 48 81 EC ?? ?? ?? ?? 48 C7 84 24 ?? ?? ?? ?? ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? E8 ?? ?? ?? ?? 0F B6 C0 85 C0 75 05 E9 ?? ?? ?? ?? E9",
 	#else
+	// v131.0
+	L"B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 51 51 A1 ?? ?? ?? ?? 56 57 8B F9 8D 4D EC 89 45 F0 E8 ?? ?? ?? ?? 8B 75 08 83 65 FC 00 8B CE E8 ?? ?? ?? ?? 0F B7 C0 8D 48 F7 83 F9 07 77",
 	// v164.0 to v186.1
 	L"B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 51 51 A1 ?? ?? ?? ?? 56 57 8B F9 8D 4D EC 89 45 F0 E8 ?? ?? ?? ?? 8B 75 08 83 65 FC 00 8B CE E8 ?? ?? ?? ?? 0F B7",
 	// v188.0 to v302.0
@@ -94,21 +108,18 @@ std::wstring AOB_ProcessPacket[] = {
 	#endif
 };
 // Format Hook
-
-std::wstring AOB_WriteTempPacket[] = {
-	// v188.0 test 009C01F0, ˆÚ“®ƒpƒPƒbƒg‚ªí‚É¶¬‚³‚ê‚é‚ª‘—M‚³‚ê‚È‚¢‚½‚ß•s‹ï‡‚ªo‚é‚Ì‚Å–³‹‚·‚é
-	L"56 8B F1 8B 06 8B 50 24 57 FF D2 8B F8 85 FF 74 2C 8B 06 8B 50 38 8B CE C7 86 ?? ?? ?? ??01 00 00 00 FF D2 8B 06 8B 50 28 57 8B CE FF D2 85 C0 74 0B 8B 06 8B 50 2C 5F 8B CE 5E FF E2 5F 5E C3",
-};
-
-// Format Hook
 std::wstring AOB_COutPacket[] = {
 	#ifdef _WIN64
+	// TWMS v263.3, 140A9E7A0, may be duplicated
+	L"48 89 5C 24 10 48 89 4C 24 08 57 48 83 EC ?? 48 8B D9 33 FF 48 89 B9",
+	// v425.2, 140983C70 by chuichui
+	L"48 89 5C 24 10 48 89 74 24 18 48 89 4C 24 08 57 48 83 EC 20 8B FA 48 8B F1 48 83 C1 08 E8 ?? ?? ?? ?? 90 33 C0 89",
+	// v414.1
+	L"48 89 5C 24 10 48 89 4C 24 08 57 48 83 EC 20 8B DA 48 8B F9 48 83 C1 08 48 C7 01 00 00 00 00 4C 8D 44 24 40 BA 00 01 00 00 E8",
 	// v410.2 from v403.1
 	L"48 89 4C 24 ?? 57 48 83 EC ?? 48 C7 44 24 ?? ?? ?? ?? ?? 48 89 5C 24 ?? 8B DA 48 8B F9 48 83 C1 ?? 48 C7 01 00 00 00 00",
 	// TWMS v246
 	L"48 89 4C 24 ?? 57 48 83 EC ?? 48 C7 44 24 ?? ?? ?? ?? ?? 48 89 5C 24 ?? 8B ?? 48 8B D9 48 C7 41 08 00 00 00 00 BA 04 01 00 00 48 8D 0D ?? ?? ?? ?? E8",
-	// v414.1
-	L"48 89 5C 24 10 48 89 4C 24 08 57 48 83 EC 20 8B DA 48 8B F9 48 83 C1 08 48 C7 01 00 00 00 00 4C 8D 44 24 40 BA 00 01 00 00 E8",
 	#else
 	// v164.0 to v186.1
 	L"B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 51 51 56 8B F1 83 66 04 00 8D 45 F3 50 8D 4E 04 68 00 01 00 00 89 75 EC E8 ?? ?? ?? ?? FF 75 08 83 65 FC 00 8B CE E8",
@@ -117,8 +128,17 @@ std::wstring AOB_COutPacket[] = {
 	#endif
 };
 
+#ifndef _WIN64
+std::wstring AOB_COutPacket_Old[] = {
+	// v131.0
+	L"B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 51 51 56 8B F1 83 66 04 00 8D 45 F3 50 8D 4E 04 68 00 01 00 00 89 75 EC E8 ?? ?? ?? ?? FF 75 0C 83 65 FC 00 FF 75 08 8B CE E8",
+};
+#endif
+
 std::wstring AOB_Encode1[] = {
 	#ifdef _WIN64
+	// TWMS v263.3, 140A9EB70
+	L"48 89 5C 24 08 57 48 83 EC ?? 48 8B D9 0F B6 FA 8B 89 ?? ?? ?? ?? 8D 51 01 3B 93 ?? ?? ?? ?? 76",
 	// v410.2
 	L"48 89 5C 24 08 57 48 83 EC 20 48 8B D9 0F B6 FA 48 8D 4C 24 38 E8 ?? ?? ?? ?? 8B D0 48 8B CB E8 ?? ?? ?? ?? 48 8B 43 08 48 85 C0 75",
 	// v403.1
@@ -133,6 +153,8 @@ std::wstring AOB_Encode1[] = {
 
 std::wstring AOB_Encode2[] = {
 	#ifdef _WIN64
+	// TWMS v263.3, 140A9EC70
+	L"48 89 5C 24 08 48 89 74 24 10 57 48 83 EC ?? 0F B7 F2 48 8B D9 8B 91 ?? ?? ?? ?? 8D 42 02 3B 81 ?? ?? ?? ?? 76",
 	// v410.2
 	L"48 89 5C 24 08 57 48 83 EC 20 48 8B D9 0F B7 FA 48 8D 4C 24 38 E8 ?? ?? ?? ?? 8B D0 48 8B CB E8 ?? ?? ?? ?? 48 8B 43 08 48 85 C0 75",
 	// v403.1
@@ -147,7 +169,8 @@ std::wstring AOB_Encode2[] = {
 
 std::wstring AOB_Encode4[] = {
 	#ifdef _WIN64
-
+	// TWMS v263.3, 140A9ED00
+	L"48 89 5C 24 08 48 89 74 24 10 57 48 83 EC ?? 8B F2 48 8B D9 8B 91 ?? ?? ?? ?? 8D 42 04 3B 81 ?? ?? ?? ?? 76",
 	// v410.2
 	L"48 89 5C 24 08 57 48 83 EC 20 48 8B D9 8B FA 48 8D 4C 24 38 E8 ?? ?? ?? ?? 8B D0 48 8B CB E8 ?? ?? ?? ?? 48 8B 43 08 48 85 C0 75",
 	// v403.1
@@ -162,6 +185,8 @@ std::wstring AOB_Encode4[] = {
 
 #ifdef _WIN64
 std::wstring AOB_Encode8[] = {
+	// TWMS v263.3, 140A9EEF0
+	L"48 89 5C 24 08 48 89 74 24 10 57 48 83 EC ?? 48 8B F2 48 8B D9 8B 91 ?? ?? ?? ?? 8D 42 08 3B 81 ?? ?? ?? ?? 76",
 	// v410.2
 	L"48 89 5C 24 08 57 48 83 EC 20 48 8B D9 48 8B FA 48 8D 4C 24 38 E8 ?? ?? ?? ?? 8B D0 48 8B CB E8 ?? ?? ?? ?? 48 8B 43 08 48 85 C0 75",
 	// v403.1
@@ -171,6 +196,8 @@ std::wstring AOB_Encode8[] = {
 
 std::wstring AOB_EncodeStr[] = {
 	#ifdef _WIN64
+	// TWMS v263.3, 140A9EFB0
+	L"48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 48 89 7C 24 20 41 56 48 83 EC ?? 48 8B 02 45 33 F6 48 8B FA 48 8B D9 48 85 C0 74 05 8B 48 FC EB 03 41 8B CE 8B B3 ?? ?? ?? ?? 8D 56 02 03 D1 3B 93 ?? ?? ?? ?? 76",
 	// v410.2
 	L"48 89 5C 24 08 57 48 83 EC 20 48 8B D9 48 8B FA 48 8B CA E8 ?? ?? ?? ?? 8B D0 48 8B CB E8 ?? ?? ?? ?? 48 8B 43 08 48 85 C0 75",
 	// v403.1
@@ -185,6 +212,8 @@ std::wstring AOB_EncodeStr[] = {
 
 std::wstring AOB_EncodeBuffer[] = {
 	#ifdef _WIN64
+	// TWMS v263.3, 140A9F150
+	L"48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 57 48 83 EC ?? 48 8B EA 41 8B F8 8B 91 ?? ?? ?? ?? 48 8B D9 42 8D 04 02 3B 81 ?? ?? ?? ?? 76",
 	// v410.2
 	L"48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 20 48 8B DA 41 8B F0 41 8B D0 48 8B F9 E8 ?? ?? ?? ?? 48 8B 47 08 48 85 C0 75",
 	// v403.1
@@ -199,6 +228,8 @@ std::wstring AOB_EncodeBuffer[] = {
 
 std::wstring AOB_Decode1[] = {
 	#ifdef _WIN64
+	// TWMS v263.3, 140A9A630
+	L"48 89 5C 24 10 48 89 4C 24 08 57 48 83 EC 50 48 8B D9 8B 79 10 2B 79 1C 48 8B 41 08 48 85 C0 75 18 B9 B5 00 00 00 E8 ?? ?? ?? ?? 48 8B 43 08 48 85 C0 75 05 45 33 C0 EB 09 44 8B 40 FC 45 85 C0 75 0C 33 D2 B9 A1 00 00 00 E8 ?? ?? ?? ?? 8B 4B 1C 8B C1 48 03 43 08 83 FF 01",
 	// v414.1
 	L"48 89 5C 24 18 48 89 4C 24 08 57 48 83 EC 40 48 8B D9 8B 79 10 2B 79 1C 48 8B 41 08 48 85 C0 75 18 B9 A7 00 00 00 E8 ?? ?? ?? ?? 48 8B 43 08 48 85 C0 75 05 45 33 C0 EB 09 44 8B 40 FC 45 85 C0 75 0C 33 D2 B9 93 00 00 00 E8 ?? ?? ?? ?? 8B 53 1C 48 03 53 08 44 8B C7 48 8D 4C 24 58 E8 ?? ?? ?? ?? 01 43 1C 0F B6 44 24 58 48 8B 5C 24 60 48 83 C4 40 5F C3",
 	// v410.2
@@ -215,6 +246,8 @@ std::wstring AOB_Decode1[] = {
 
 std::wstring AOB_Decode2[] = {
 	#ifdef _WIN64
+	// TWMS v263.3, 140A9A6D0
+	L"48 89 5C 24 10 48 89 4C 24 08 57 48 83 EC 50 48 8B D9 8B 79 10 2B 79 1C 48 8B 41 08 48 85 C0 75 18 B9 B5 00 00 00 E8 ?? ?? ?? ?? 48 8B 43 08 48 85 C0 75 05 45 33 C0 EB 09 44 8B 40 FC 45 85 C0 75 0C 33 D2 B9 A1 00 00 00 E8 ?? ?? ?? ?? 8B 4B 1C 8B C1 48 03 43 08 83 FF 02",
 	// v414.1
 	L"48 89 5C 24 18 48 89 4C 24 08 57 48 83 EC 40 48 8B D9 8B 79 10 2B 79 1C 48 8B 41 08 48 85 C0 75 18 B9 A7 00 00 00 E8 ?? ?? ?? ?? 48 8B 43 08 48 85 C0 75 05 45 33 C0 EB 09 44 8B 40 FC 45 85 C0 75 0C 33 D2 B9 93 00 00 00 E8 ?? ?? ?? ?? 8B 53 1C 48 03 53 08 44 8B C7 48 8D 4C 24 58 E8 ?? ?? ?? ?? 01 43 1C 0F B7 44 24 58 48 8B 5C 24 60 48 83 C4 40 5F C3",
 	// v410.2
@@ -231,6 +264,8 @@ std::wstring AOB_Decode2[] = {
 
 std::wstring AOB_Decode4[] = {
 	#ifdef _WIN64
+	// TWMS v263.3, 140A9AA70
+	L"48 89 5C 24 10 48 89 4C 24 08 57 48 83 EC 50 48 8B D9 8B 79 10 2B 79 1C 48 8B 41 08 48 85 C0 75 18 B9 B5 00 00 00 E8 ?? ?? ?? ?? 48 8B 43 08 48 85 C0 75 05 45 33 C0 EB 09 44 8B 40 FC 45 85 C0 75 0C 33 D2 B9 A1 00 00 00 E8 ?? ?? ?? ?? 8B 4B 1C 8B C1 48 03 43 08 83 FF 04",
 	// v414.1
 	L"48 89 5C 24 18 48 89 4C 24 08 57 48 83 EC 40 48 8B D9 8B 79 10 2B 79 1C 48 8B 41 08 48 85 C0 75 18 B9 A7 00 00 00 E8 ?? ?? ?? ?? 48 8B 43 08 48 85 C0 75 05 45 33 C0 EB 09 44 8B 40 FC 45 85 C0 75 0C 33 D2 B9 93 00 00 00 E8 ?? ?? ?? ?? 8B 53 1C 48 03 53 08 44 8B C7 48 8D 4C 24 58 E8 ?? ?? ?? ?? 01 43 1C 8B 44 24 58 48 8B 5C 24 60 48 83 C4 40 5F C3",
 	// v410.2
@@ -247,6 +282,8 @@ std::wstring AOB_Decode4[] = {
 
 #ifdef _WIN64
 std::wstring AOB_Decode8[] = {
+	// TWMS v263.3, 140A9AA70
+	L"48 89 5C 24 10 48 89 4C 24 08 57 48 83 EC 50 48 8B D9 8B 79 10 2B 79 1C 48 8B 41 08 48 85 C0 75 18 B9 B5 00 00 00 E8 ?? ?? ?? ?? 48 8B 43 08 48 85 C0 75 05 45 33 C0 EB 09 44 8B 40 FC 45 85 C0 75 0C 33 D2 B9 A1 00 00 00 E8 ?? ?? ?? ?? 8B 4B 1C 8B C1 48 03 43 08 83 FF 08 72 ?? 48",
 	// v414.1
 	L"48 89 5C 24 18 48 89 4C 24 08 57 48 83 EC 40 48 8B D9 8B 79 10 2B 79 1C 48 8B 41 08 48 85 C0 75 18 B9 A7 00 00 00 E8 ?? ?? ?? ?? 48 8B 43 08 48 85 C0 75 05 45 33 C0 EB 09 44 8B 40 FC 45 85 C0 75 0C 33 D2 B9 93 00 00 00 E8 ?? ?? ?? ?? 8B 53 1C 48 03 53 08 44 8B C7 48 8D 4C 24 58 E8 ?? ?? ?? ?? 01 43 1C 48 8B 44 24 58 48 8B 5C 24 60 48 83 C4 40 5F C3",
 	// v410.2
@@ -258,6 +295,8 @@ std::wstring AOB_Decode8[] = {
 
 std::wstring AOB_DecodeStr[] = {
 	#ifdef _WIN64
+	// TWMS v263.3, 140A9ABB0
+	L"48 89 5C 24 18 48 89 74 24 20 48 89 54 24 10 48 89 4C 24 08 57 41 54 41 55 41 56 41 57 48 83 EC 60 48 8B F2 4C 8B F1 45 33 ED 44 89 6C 24 20 4C 89 2A C7 44 24 20 01 00 00 00 8B 59 10 2B 59 1C 48 8B 41 08 48 85 C0 75 18 B9 B5 00 00 00 E8 ?? ?? ?? ?? 49 8B 46 08 48 85 C0 75",
 	// v414.1
 	L"48 89 5C 24 18 48 89 54 24 10 48 89 4C 24 08 56 57 41 56 48 83 EC 40 48 8B F2 48 8B D9 33 FF 89 7C 24 20 48 89 3A C7 44 24 20 01 00 00 00 44 8B 71 10 44 2B 71 1C 48 8B 41 08 48 85 C0 75 13 B9 A7 00 00 00 E8",
 	// v410.2
@@ -274,6 +313,8 @@ std::wstring AOB_DecodeStr[] = {
 
 std::wstring AOB_DecodeBuffer[] = {
 	#ifdef _WIN64
+	// TWMS v263.3, 140A9AE10
+	L"48 89 5C 24 10 48 89 74 24 18 48 89 7C 24 20 48 89 4C 24 08 41 56 48 83 EC 50 41 8B F0 48 8B DA 48 8B F9 44 8B 71 10 44 2B 71 1C 48 8B 41 08 48 85 C0 75 18 B9 B5 00 00 00 E8",
 	// v414.1
 	L"48 89 5C 24 10 48 89 74 24 18 48 89 7C 24 20 48 89 4C 24 08 41 56 48 83 EC 40 41 8B F0 4C 8B F2 48 8B D9 8B 79 10 2B 79 1C 48 8B 41 08 48 85 C0 75 18 B9 A7 00 00 00 E8",
 	// v410.2

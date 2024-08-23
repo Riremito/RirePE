@@ -1,4 +1,4 @@
-#include"../RirePE/MainGUI.h"
+Ôªø#include"../RirePE/MainGUI.h"
 
 int global_header_size = 2; // default, 0 = raw
 bool SetHeaderSize(Alice &a) {
@@ -18,13 +18,22 @@ int GetHeaderSize() {
 	return global_header_size;
 }
 
-// ê⁄ë±èÛë‘
+bool SetHeaderSize(int header_size) {
+	if (header_size < 1 || 8 < header_size) {
+		return false;
+	}
+
+	global_header_size = header_size;
+	return true;
+}
+
+// Êé•Á∂öÁä∂ÊÖã
 void SetInfo(std::wstring wText) {
 	Alice &a = GetMainGUI();
 	a.SetText(STATIC_INFO, wText);
 }
 
-// ListViewÇÃçXêV
+// ListView„ÅÆÊõ¥Êñ∞
 bool UpdateLogger(PacketEditorMessage &pem, bool &bBlock) {
 	if (pem.header != SENDPACKET && pem.header != RECVPACKET) {
 		return false;
@@ -43,6 +52,11 @@ bool UpdateLogger(PacketEditorMessage &pem, bool &bBlock) {
 	}
 
 	Alice &a = GetMainGUI();
+
+	// auto ignore mode
+	if (a.CheckBoxStatus(CHECK_AUTO_IGNORE)) {
+		AutoIgnore(pem);
+	}
 
 	std::wstring wType;
 	if (pem.header == SENDPACKET) {
@@ -103,7 +117,7 @@ bool UpdateLogger(PacketEditorMessage &pem, bool &bBlock) {
 	return true;
 }
 
-// Status, Format PacketÇÃçXêV
+// Status, Format Packet„ÅÆÊõ¥Êñ∞
 bool UpdateStatus(PacketEditorMessage &pem) {
 	if (pem.header != SENDPACKET && pem.header != DECODE_END) {
 		return false;
@@ -144,7 +158,7 @@ bool UpdateStatus(PacketEditorMessage &pem) {
 	return false;
 }
 
-// ListViewÇ≈ëIëíÜÇÃPacketÇÉZÉbÉg
+// ListView„ÅßÈÅ∏Êäû‰∏≠„ÅÆPacket„Çí„Çª„ÉÉ„Éà
 bool SetRawPacket(Alice &a, MessageHeader type, std::wstring &text_packet) {
 	if (text_packet.length() > 1024) {
 		return false;
@@ -179,7 +193,7 @@ bool OnCreate(Alice &a) {
 
 	a.Button(BUTTON_OPEN_FORMATVIEW, L"Format View", 100, (PE_HEIGHT * 2 / 3 + 10), 100);
 	a.StaticText(STATIC_HEADER_SIZE, L"Header Size:", 250, (PE_HEIGHT * 2 / 3 + 10));
-	a.EditBox(EDIT_HEADER_SIZE, 330, (PE_HEIGHT * 2 / 3 + 10), L"2", 50);
+	a.EditBox(EDIT_HEADER_SIZE, 330, (PE_HEIGHT * 2 / 3 + 10), std::to_wstring(GetHeaderSize()), 50);
 	a.CheckBox(CHECK_HEADER_SIZE, L"Update", 390, (PE_HEIGHT * 2 / 3 + 10), BST_CHECKED);
 	a.ReadOnly(EDIT_HEADER_SIZE);
 	a.Button(BUTTON_OPEN_FILTER, L"Filter", 450, (PE_HEIGHT * 2 / 3 + 10), 100);
@@ -199,11 +213,17 @@ bool OnCreate(Alice &a) {
 	a.Button(BUTTON_INC_SEND, L"+", (PE_WIDTH - 25), (PE_HEIGHT * 2 / 3 + 50));
 	a.Button(BUTTON_INC_RECV, L"+", (PE_WIDTH - 25), (PE_HEIGHT * 2 / 3 + 70));
 #endif
+
+	// add header to ignore list automatically
+	a.CheckBox(CHECK_AUTO_IGNORE, L"Auto Filter Mode", 450, (PE_HEIGHT * 2 / 3 + 30));
+	// save ignore list
+	a.Button(BUTTON_SAVE_CONFIG, L"Save Config", 570, (PE_HEIGHT * 2 / 3 + 30));
+
 	PacketLogger(); // logger
 	return true;
 }
 
-// êFÅXÇ»èàóù
+// Ëâ≤„ÄÖ„Å™Âá¶ÁêÜ
 bool OnCommand(Alice &a, int nIDDlgItem) {
 	if (nIDDlgItem == BUTTON_CLEAR) {
 		ClearAll(); // logger
@@ -248,10 +268,15 @@ bool OnCommand(Alice &a, int nIDDlgItem) {
 		return true;
 	}
 
+	if (nIDDlgItem == BUTTON_SAVE_CONFIG) {
+		SaveConfig();
+		return true;
+	}
+
 	return true;
 }
 
-// ListViewè„Ç≈ëIëÇµÇΩÉpÉPÉbÉgÇì¸óÕóìÇ…ÉRÉsÅ[
+// ListView‰∏ä„ÅßÈÅ∏Êäû„Åó„Åü„Éë„Ç±„ÉÉ„Éà„ÇíÂÖ•ÂäõÊ¨Ñ„Å´„Ç≥„Éî„Éº
 bool OnNotify(Alice &a, int nIDDlgItem) {
 	if (nIDDlgItem == LISTVIEW_LOGGER) {
 		std::wstring text_type;
@@ -261,7 +286,7 @@ bool OnNotify(Alice &a, int nIDDlgItem) {
 
 		check &= a.ListView_Copy(LISTVIEW_LOGGER, LV_TYPE, text_type, false);
 		check &= a.ListView_Copy(LISTVIEW_LOGGER, LV_ID, text_id, false);
-		check &= a.ListView_Copy(LISTVIEW_LOGGER, LV_PACKET, text_packet, true);
+		check &= a.ListView_Copy(LISTVIEW_LOGGER, LV_PACKET, text_packet, true, 4096);
 
 		if (!check) {
 			return false;
@@ -309,7 +334,7 @@ Alice& GetMainGUI() {
 	return *global_a;
 }
 
-// èIóπèàóù
+// ÁµÇ‰∫ÜÂá¶ÁêÜ
 LRESULT CALLBACK ExitCallback(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
 	if (Msg == WM_DESTROY) {
 		// format view
@@ -318,7 +343,7 @@ LRESULT CALLBACK ExitCallback(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 			CloseWindow(sub_hwnd);
 			DestroyWindow(sub_hwnd);
 		}
-		// ã≠êßèIóπ
+		// Âº∑Âà∂ÁµÇ‰∫Ü
 		ExitProcess(0);
 	}
 	return 0;
