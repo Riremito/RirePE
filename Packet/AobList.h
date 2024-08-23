@@ -137,6 +137,8 @@ std::wstring AOB_COutPacket_Old[] = {
 
 std::wstring AOB_Encode1[] = {
 	#ifdef _WIN64
+	// TWMS v263.3, 140A9EB70
+	L"48 89 5C 24 08 57 48 83 EC ?? 48 8B D9 0F B6 FA 8B 89 ?? ?? ?? ?? 8D 51 01 3B 93 ?? ?? ?? ?? 76",
 	// v410.2
 	L"48 89 5C 24 08 57 48 83 EC 20 48 8B D9 0F B6 FA 48 8D 4C 24 38 E8 ?? ?? ?? ?? 8B D0 48 8B CB E8 ?? ?? ?? ?? 48 8B 43 08 48 85 C0 75",
 	// v403.1
@@ -151,6 +153,8 @@ std::wstring AOB_Encode1[] = {
 
 std::wstring AOB_Encode2[] = {
 	#ifdef _WIN64
+	// TWMS v263.3, 140A9EC70
+	L"48 89 5C 24 08 48 89 74 24 10 57 48 83 EC ?? 0F B7 F2 48 8B D9 8B 91 ?? ?? ?? ?? 8D 42 02 3B 81 ?? ?? ?? ?? 76",
 	// v410.2
 	L"48 89 5C 24 08 57 48 83 EC 20 48 8B D9 0F B7 FA 48 8D 4C 24 38 E8 ?? ?? ?? ?? 8B D0 48 8B CB E8 ?? ?? ?? ?? 48 8B 43 08 48 85 C0 75",
 	// v403.1
@@ -165,6 +169,8 @@ std::wstring AOB_Encode2[] = {
 
 std::wstring AOB_Encode4[] = {
 	#ifdef _WIN64
+	// TWMS v263.3, 140A9ED00
+	L"48 89 5C 24 08 48 89 74 24 10 57 48 83 EC ?? 8B F2 48 8B D9 8B 91 ?? ?? ?? ?? 8D 42 04 3B 81 ?? ?? ?? ?? 76",
 	// v410.2
 	L"48 89 5C 24 08 57 48 83 EC 20 48 8B D9 8B FA 48 8D 4C 24 38 E8 ?? ?? ?? ?? 8B D0 48 8B CB E8 ?? ?? ?? ?? 48 8B 43 08 48 85 C0 75",
 	// v403.1
@@ -179,6 +185,8 @@ std::wstring AOB_Encode4[] = {
 
 #ifdef _WIN64
 std::wstring AOB_Encode8[] = {
+	// TWMS v263.3, 140A9EEF0
+	L"48 89 5C 24 08 48 89 74 24 10 57 48 83 EC ?? 48 8B F2 48 8B D9 8B 91 ?? ?? ?? ?? 8D 42 08 3B 81 ?? ?? ?? ?? 76",
 	// v410.2
 	L"48 89 5C 24 08 57 48 83 EC 20 48 8B D9 48 8B FA 48 8D 4C 24 38 E8 ?? ?? ?? ?? 8B D0 48 8B CB E8 ?? ?? ?? ?? 48 8B 43 08 48 85 C0 75",
 	// v403.1
@@ -188,6 +196,8 @@ std::wstring AOB_Encode8[] = {
 
 std::wstring AOB_EncodeStr[] = {
 	#ifdef _WIN64
+	// TWMS v263.3, 140A9EFB0
+	L"48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 48 89 7C 24 20 41 56 48 83 EC ?? 48 8B 02 45 33 F6 48 8B FA 48 8B D9 48 85 C0 74 05 8B 48 FC EB 03 41 8B CE 8B B3 ?? ?? ?? ?? 8D 56 02 03 D1 3B 93 ?? ?? ?? ?? 76",
 	// v410.2
 	L"48 89 5C 24 08 57 48 83 EC 20 48 8B D9 48 8B FA 48 8B CA E8 ?? ?? ?? ?? 8B D0 48 8B CB E8 ?? ?? ?? ?? 48 8B 43 08 48 85 C0 75",
 	// v403.1
@@ -202,6 +212,8 @@ std::wstring AOB_EncodeStr[] = {
 
 std::wstring AOB_EncodeBuffer[] = {
 	#ifdef _WIN64
+	// TWMS v263.3, 140A9F150
+	L"48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 57 48 83 EC ?? 48 8B EA 41 8B F8 8B 91 ?? ?? ?? ?? 48 8B D9 42 8D 04 02 3B 81 ?? ?? ?? ?? 76",
 	// v410.2
 	L"48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 20 48 8B DA 41 8B F0 41 8B D0 48 8B F9 E8 ?? ?? ?? ?? 48 8B 47 08 48 85 C0 75",
 	// v403.1

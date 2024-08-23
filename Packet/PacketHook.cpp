@@ -433,7 +433,7 @@ void EncodeStr_Hook(OutPacket *p, void *s) {
 void __fastcall EncodeStr_Hook(OutPacket *p, void *edx, char *s) {
 #endif
 #ifdef _WIN64
-	PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODESTR, p->encoded, sizeof(WORD) + *(DWORD *)(*(ULONG_PTR *)s - 0x04) };
+	PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODESTR, p->encoded, sizeof(WORD) + *(DWORD *)(*(ULONG_PTR *)s - 0x04), 0, (ULONG_PTR)p };
 #else
 	PacketExtraInformation pxi = { packet_id_out, (DWORD)_ReturnAddress(), ENCODESTR, p->encoded, sizeof(WORD) + strlen(s), 0, (ULONG_PTR)p };
 #endif
@@ -691,7 +691,6 @@ bool PacketHook_Thread(HINSTANCE hinstDLL) {
 	if (uSendPacket) {
 #endif
 		AOBHook(COutPacket);
-		/*
 #ifndef _WIN64
 		// old version
 		if (!_COutPacket) {
@@ -706,7 +705,6 @@ bool PacketHook_Thread(HINSTANCE hinstDLL) {
 #endif
 		AOBHook(EncodeStr);
 		AOBHook(EncodeBuffer);
-		*/
 	}
 
 	AOBHookWithResult(ProcessPacket);
