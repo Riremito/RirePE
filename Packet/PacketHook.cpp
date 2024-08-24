@@ -662,14 +662,6 @@ bool PacketHook_Thread(HINSTANCE hinstDLL) {
 		uCClientSocket += *(signed long int *)(uCClientSocket + 0x01) + 0x05;
 		_CClientSocket = (decltype(_CClientSocket))uCClientSocket;
 		DEBUG(L"uCClientSocket = " + QWORDtoString(uCClientSocket));
-
-		// TWMS v263.3 bandaid fix, tools lib does not support this function hooking because this has call code near start address of the function.
-		if (uSendPacket_EH == 0x1422BE740) {
-			r.Patch(0x1422BE749, L"90 90 90 90 90 E9 98 00 00 00"); // move call to other place
-			r.Patch(0x1422BE7EB, L"FF 15 E5 FE FF FF 48 89 44 24 30 E9 58 FF FF FF"); // recreate call code and overwritten code
-			r.Patch(0x1422BE6D6, L"60 30 25 40 01 00 00 00"); // call addr
-		}
-
 		SHookFunction(SendPacket_EH, uSendPacket_EH);
 }
 #else
