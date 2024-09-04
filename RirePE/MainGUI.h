@@ -24,6 +24,8 @@ void SetInfo(std::wstring wText);
 int GetHeaderSize();
 bool SetHeaderSize(int header_size);
 
+int get_target_pid();
+std::wstring& get_target_window_class();
 std::wstring GetPipeNameLogger();
 std::wstring GetPipeNameSender();
 
