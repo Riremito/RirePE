@@ -7,6 +7,7 @@
 enum FVSubControl {
 	FV_LISTVIEW_FORMAT = 100,
 	FV_EDIT_INFO,
+	FV_RECV,
 };
 
 enum FVListViewIndex {

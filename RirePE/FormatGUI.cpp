@@ -1,4 +1,5 @@
 ﻿#include"../RirePE/MainGUI.h"
+#include"../RirePE/PacketScript.h"
 
 Alice *global_fv = NULL;
 HINSTANCE hFVInstance = NULL;
@@ -24,12 +25,29 @@ bool FVOnCreate(Alice &fv) {
 	fv.ListView_AddHeader(FV_LISTVIEW_FORMAT, L"Data", 300);
 	fv.ListView_AddHeader(FV_LISTVIEW_FORMAT, L"Int", 80);
 	// status
-	fv.TextArea(FV_EDIT_INFO, 3, (FV_HEIGHT / 2), (FV_WIDTH - 6), (FV_HEIGHT / 2 - 6));
-	fv.ReadOnly(FV_EDIT_INFO);
+	fv.TextArea(FV_EDIT_INFO, 3, (FV_HEIGHT / 2), (FV_WIDTH - 6), (FV_HEIGHT / 2 - 6) - 20);
+	//fv.ReadOnly(FV_EDIT_INFO);
+	fv.Button(FV_RECV, L"Recv", (FV_WIDTH - 3) - 100, (FV_HEIGHT - 3) - 20, 100);
 	return true;
 }
 
 bool FVOnCommand(Alice &fv, int nIDDlgItem) {
+	if (nIDDlgItem == FV_RECV) {
+		Alice &main_gui = GetMainGUI();
+		std::wstring wText = fv.GetText(FV_EDIT_INFO);
+		RScript rs(wText);
+
+		if (!rs.Parse()) {
+			wText = L"RScript Error!";
+			//main_gui.SetText(EDIT_PACKET_RECV, wText);
+			return false;
+		}
+
+		wText = rs.getRaw();
+		//main_gui.SetText(EDIT_PACKET_RECV, wText);
+		PacketSender(main_gui, RECVPACKET, wText);
+		return true;
+	}
 	return true;
 }
 
