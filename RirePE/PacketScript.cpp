@@ -28,22 +28,6 @@ void ServerPacket::EncodeFloat(float val) {
 	Encode4(*(DWORD *)&val);
 }
 
-/*
-// legnth = byte
-void ServerPacket::EncodeWStr1(std::wstring val) {
-	Encode1((BYTE)val.length());
-	for (size_t i = 0; i < val.length(); i++) {
-		Encode2((WORD)val.at(i));
-	}
-}
-void ServerPacket::EncodeWStr2(std::wstring val) {
-	Encode2((WORD)val.length());
-	for (size_t i = 0; i < val.length(); i++) {
-		Encode2((WORD)val.at(i));
-	}
-}
-*/
-
 void ServerPacket::Encode8(ULONGLONG val) {
 	Encode4((DWORD)val);
 	Encode4((DWORD)(val >> 32));
@@ -92,8 +76,16 @@ bool ServerPacket::EncodeStr(std::wstring val) {
 	return true;
 }
 
-bool ServerPacket::EncodeBuffer(std::wstring val) {
-	// not coded
+bool ServerPacket::EncodeBuffer(BYTE *val, size_t size) {
+	if (size == 0) {
+		return false;
+	}
+
+	for (size_t i = 0; i < size; i++) {
+		Encode1(val[i]);
+	}
+
+	return true;
 }
 
 
@@ -131,24 +123,24 @@ bool RScript::DataParse(std::wstring data, ULONGLONG &uData) {
 	// hex
 	if (std::regex_search(data, match, std::wregex(LR"(^\s*(0x|@|)([0-9A-Fa-f]+))")) && match.size() >= 2) {
 		swscanf_s(match[2].str().c_str(), L"%llX", &uData);
-		DEBUG(match[2].str());
+		//DEBUG(L"DataParse hex : " + match[2].str());
 		return true;
 	}
 	// int
 	if (std::regex_search(data, match, std::wregex(LR"(^\s*(#-)(\d+))")) && match.size() >= 2) {
 		swscanf_s(match[2].str().c_str(), L"%lld", &uData);
 		uData = ~uData + 1;
-		DEBUG(match[2].str());
+		//DEBUG(L"DataParse int- : " + match[2].str());
 		return true;
 	}
 	// int
 	if (std::regex_search(data, match, std::wregex(LR"(^\s*(#)(\d+))")) && match.size() >= 2) {
 		swscanf_s(match[2].str().c_str(), L"%lld", &uData);
-		DEBUG(match[2].str());
+		//DEBUG(L"DataParse int+ : " + match[2].str());
 		return true;
 	}
 
-	DEBUG(L"DataParse Fail");
+	DEBUG(L"DataParse : Error");
 	return false;
 }
 
@@ -162,22 +154,22 @@ bool RScript::DataParseFloat(std::wstring data, float &fData) {
 		swscanf_s(match[2].str().c_str(), L"%lld", &uData);
 		uData = ~uData + 1;
 		fData = (float)((int)uData);
-		RScript(match[2].str());
+		//DEBUG(L"DataParseFloat- : " + match[2].str());
 		return true;
 	}
 	// int
 	if (std::regex_search(data, match, std::wregex(LR"(^\s*(#)(\d+))")) && match.size() >= 2) {
 		swscanf_s(match[2].str().c_str(), L"%lld", &uData);
 		fData = (float)((int)uData);
-		RScript(match[2].str());
+		//DEBUG(L"DataParseFloat+ : " + match[2].str());
 		return true;
 	}
 
-	RScript(L"DataParse Fail");
+	DEBUG(L"DataParseFloat : Error");
 	return false;
 }
 
-bool RScript::WStrParse(std::wstring data, std::wstring &wData) {
+bool RScript::DataParseStr(std::wstring data, std::wstring &wData) {
 	wData = L"";
 
 	std::wsmatch match;
@@ -185,11 +177,40 @@ bool RScript::WStrParse(std::wstring data, std::wstring &wData) {
 	// "Str"
 	if (std::regex_search(data, match, std::wregex(LR"(^\s*(L|)\"(.*)\")")) && match.size() >= 2) {
 		wData = match[2].str();
+		//DEBUG(L"DataParseStr : " + match[2].str());
 		return true;
 	}
 
-	wData = data;
-	return true;
+	DEBUG(L"DataParseStr : Error");
+	return false;
+}
+
+bool RScript::DataParseBuffer(std::wstring data, std::vector<BYTE> &vData) {
+	vData.clear();
+
+	std::wsmatch match;
+
+	// "Str"
+	if (std::regex_search(data, match, std::wregex(LR"(^\s*(\'|)([0-9A-Fa-f]+)(\'|))")) && match.size() >= 3) {
+		std::wstring bufstr = match[2].str();
+
+		DWORD byte = 0;
+		if (bufstr.length() % 2 != 0) {
+			//DEBUG(L"DataParseBuffer : Error (half byte)");
+			return false;
+		}
+
+		size_t loop = bufstr.length() / 2;
+		for (size_t i = 0; i < loop; i++) {
+			swscanf_s(&bufstr.c_str()[i*2], L"%02X", &byte);
+			vData.push_back((BYTE)byte);
+		}
+		//DEBUG(L"DataParseBuffer : " + match[2].str());
+		return true;
+	}
+
+	DEBUG(L"DataParseBuffer : Error");
+	return false;
 }
 
 
@@ -231,18 +252,11 @@ bool RScript::Parse(std::wstring input) {
 		type = TYPE_ENCODE_STR;
 		data = match[2];
 	}
-	/*
-	else if (std::regex_search(input, match, std::wregex(LR"(^\s*(EncodeWStr1)\s*\((.*)\))")) && match.size() >= 2) {
-		type = TYPE_WSTR1;
+	else if (std::regex_search(input, match, std::wregex(LR"(^\s*(EncodeBuffer)\s*\((.*)\))")) && match.size() >= 2) {
+		type = TYPE_ENCODE_BUFFER;
 		data = match[2];
 	}
-	else if (std::regex_search(input, match, std::wregex(LR"(^\s*(EncodeWStr2)\s*\((.*)\))")) && match.size() >= 2) {
-		type = TYPE_WSTR2;
-		data = match[2];
-	}
-	*/
 	else {
-		DEBUG(L"Parse Failvvv");
 		return false;
 	}
 
@@ -294,31 +308,23 @@ bool RScript::Parse(std::wstring input) {
 	}
 	case TYPE_ENCODE_STR: {
 		std::wstring val;
-		WStrParse(data, val);
+		DataParseStr(data, val);
 		sp.EncodeStr(val);
 		return true;
 	}
-	/*
-	case TYPE_WSTR1: {
+	case TYPE_ENCODE_BUFFER: {
 		std::wstring val;
-		WStrParse(data, val);
-		p.EncodeWStr1(val);
+		std::vector<BYTE> v;
+		DataParseBuffer(data, v);
+		sp.EncodeBuffer(&v[0], v.size());
 		return true;
 	}
-	case TYPE_WSTR2: {
-		std::wstring val;
-		WStrParse(data, val);
-		p.EncodeWStr2(val);
-		return true;
-	}
-	*/
 	default:
 	{
 		return false;
 	}
 	}
 
-	DEBUG(L"Parse Fail");
 	return false;
 }
 

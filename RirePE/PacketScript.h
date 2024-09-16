@@ -23,7 +23,7 @@ public:
 	void EncodeFloat(float val);
 	void Encode8(ULONGLONG val);
 	bool EncodeStr(std::wstring val);
-	bool EncodeBuffer(std::wstring val); // no size header
+	bool EncodeBuffer(BYTE *val, size_t size); // no size header
 };
 
 
@@ -34,7 +34,8 @@ private:
 
 	bool DataParse(std::wstring data, ULONGLONG &uData);
 	bool DataParseFloat(std::wstring data, float &fData);
-	bool WStrParse(std::wstring data, std::wstring &wData);
+	bool DataParseStr(std::wstring data, std::wstring &wData);
+	bool DataParseBuffer(std::wstring data, std::vector<BYTE> &vData);
 	bool Parse(std::wstring input);
 
 public:

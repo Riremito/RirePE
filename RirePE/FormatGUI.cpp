@@ -24,8 +24,9 @@ bool FVOnCreate(Alice &fv) {
 	fv.ListView_AddHeader(FV_LISTVIEW_FORMAT, L"Enc", 60);
 	fv.ListView_AddHeader(FV_LISTVIEW_FORMAT, L"Data", 300);
 	fv.ListView_AddHeader(FV_LISTVIEW_FORMAT, L"Int", 80);
-	// status
+	// info
 	fv.TextArea(FV_EDIT_INFO, 3, (FV_HEIGHT / 2), (FV_WIDTH - 6), (FV_HEIGHT / 2 - 6) - 20);
+	SendDlgItemMessageW(fv.GetMainHWND(), FV_EDIT_INFO, EM_SETLIMITTEXT, (WPARAM)0x100000, 0);
 	//fv.ReadOnly(FV_EDIT_INFO);
 	fv.Button(FV_RECV, L"Recv", (FV_WIDTH - 3) - 100, (FV_HEIGHT - 3) - 20, 100);
 	return true;
