@@ -67,40 +67,40 @@ bool BYTEtoShiftJIS(BYTE *text, size_t len, std::string &sjis) {
 }
 
 #ifdef _WIN64
-void(*_SendPacket)(void *rcx, OutPacket *p);
-void(*_SendPacket_EH)(OutPacket *p);
-void* (*_CClientSocket)(void);
-void(*_COutPacket)(OutPacket *p, WORD w);
-void(*_Encode1)(OutPacket *p, BYTE b);
-void(*_Encode2)(OutPacket *p, WORD w);
-void(*_Encode4)(OutPacket *p, DWORD dw);
-void(*_Encode8)(OutPacket *p, ULONG_PTR u);
-void(*_EncodeStr)(OutPacket *p, void *s);
-void(*_EncodeBuffer)(OutPacket *p, BYTE *b, DWORD len);
+void(*_SendPacket)(void *rcx, OutPacket *p) = NULL;
+void(*_SendPacket_EH)(OutPacket *p) = NULL;
+void* (*_CClientSocket)(void) = NULL;
+void(*_COutPacket)(OutPacket *p, WORD w) = NULL;
+void(*_Encode1)(OutPacket *p, BYTE b) = NULL;
+void(*_Encode2)(OutPacket *p, WORD w) = NULL;
+void(*_Encode4)(OutPacket *p, DWORD dw) = NULL;
+void(*_Encode8)(OutPacket *p, ULONG_PTR u) = NULL;
+void(*_EncodeStr)(OutPacket *p, void *s) = NULL;
+void(*_EncodeBuffer)(OutPacket *p, BYTE *b, DWORD len) = NULL;
 
-void(*_ProcessPacket)(void *rcx, InPacket *p);
-BYTE(*_Decode1)(InPacket *p);
-WORD(*_Decode2)(InPacket *p);
-DWORD(*_Decode4)(InPacket *p);
-ULONG_PTR(*_Decode8)(InPacket *p);
-char** (*_DecodeStr)(InPacket *p, char **s);
-void(*_DecodeBuffer)(InPacket *p, BYTE *b, DWORD len);
+void(*_ProcessPacket)(void *rcx, InPacket *p) = NULL;
+BYTE(*_Decode1)(InPacket *p) = NULL;
+WORD(*_Decode2)(InPacket *p) = NULL;
+DWORD(*_Decode4)(InPacket *p) = NULL;
+ULONG_PTR(*_Decode8)(InPacket *p) = NULL;
+char** (*_DecodeStr)(InPacket *p, char **s) = NULL;
+void(*_DecodeBuffer)(InPacket *p, BYTE *b, DWORD len) = NULL;
 #else
-void(__thiscall *_SendPacket)(void *ecx, OutPacket *p);
+void(__thiscall *_SendPacket)(void *ecx, OutPacket *p) = NULL;
 void(__thiscall *_COutPacket)(OutPacket *p, WORD w) = NULL;
 void(__thiscall *_COutPacket_Old)(OutPacket *p, WORD w, DWORD dw) = NULL;
-void(__thiscall *_Encode1)(OutPacket *p, BYTE b);
-void(__thiscall *_Encode2)(OutPacket *p, WORD w);
-void(__thiscall *_Encode4)(OutPacket *p, DWORD dw);
-void(__thiscall *_EncodeStr)(OutPacket *p, char *s);
-void(__thiscall *_EncodeBuffer)(OutPacket *p, BYTE *b, DWORD len);
+void(__thiscall *_Encode1)(OutPacket *p, BYTE b) = NULL;
+void(__thiscall *_Encode2)(OutPacket *p, WORD w) = NULL;
+void(__thiscall *_Encode4)(OutPacket *p, DWORD dw) = NULL;
+void(__thiscall *_EncodeStr)(OutPacket *p, char *s) = NULL;
+void(__thiscall *_EncodeBuffer)(OutPacket *p, BYTE *b, DWORD len) = NULL;
 
-void(__thiscall *_ProcessPacket)(void *ecx, InPacket *p);
-BYTE(__thiscall *_Decode1)(InPacket *p);
-WORD(__thiscall *_Decode2)(InPacket *p);
-DWORD(__thiscall *_Decode4)(InPacket *p);
-char** (__thiscall *_DecodeStr)(InPacket *p, char **s);
-void(__thiscall *_DecodeBuffer)(InPacket *p, BYTE *b, DWORD len);
+void(__thiscall *_ProcessPacket)(void *ecx, InPacket *p) = NULL;
+BYTE(__thiscall *_Decode1)(InPacket *p) = NULL;
+WORD(__thiscall *_Decode2)(InPacket *p) = NULL;
+DWORD(__thiscall *_Decode4)(InPacket *p) = NULL;
+char** (__thiscall *_DecodeStr)(InPacket *p, char **s) = NULL;
+void(__thiscall *_DecodeBuffer)(InPacket *p, BYTE *b, DWORD len) = NULL;
 #endif
 
 DWORD packet_id_out = (GetCurrentProcessId() << 16); // 偶数
@@ -730,9 +730,191 @@ bool PacketHook_Thread(HINSTANCE hinstDLL) {
 }
 
 
-bool PacketHook(HINSTANCE hinstDLL) {
-	HANDLE hThread = CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)PacketHook_Thread, hinstDLL, NULL, NULL);
+#ifndef _WIN64
+#define DLL_NAME L"Packet"
+#else
+#define DLL_NAME L"Packet64"
+#endif
 
+#define INI_FILE_NAME DLL_NAME".ini"
+
+ULONG_PTR StringtoAddress(std::wstring &wAddr) {
+	ULONG_PTR uAddr = 0;
+#ifdef _WIN64
+	swscanf_s(wAddr.c_str(), L"%llX", &uAddr);
+#else
+	swscanf_s(wAddr.c_str(), L"%08X", &uAddr);
+#endif
+	return uAddr;
+}
+
+ULONG_PTR ConftoAddress(Config &conf, std::wstring wLabel) {
+	std::wstring wText;
+	if (conf.Read(DLL_NAME, wLabel, wText)) {
+		return StringtoAddress(wText);
+	}
+	return 0;
+}
+
+bool PacketHook_Conf(HINSTANCE hinstDLL) {
+	Config conf(INI_FILE_NAME, hinstDLL);
+	InitializeCriticalSection(&cs);
+	Rosemary r;
+
+	//ULONG_PTR uSendPacket = 0;
+	ULONG_PTR uProcessPacket = 0;
+#ifdef _WIN64
+	ULONG_PTR uSendPacket = 0;
+	ULONG_PTR uCClientSocket = 0;
+#endif
+
+	ULONG_PTR uConfAddr = 0;
+	uConfAddr = ConftoAddress(conf, L"CClientSocket__SendPacket");
+	if (uConfAddr) {
+		SHookFunction(SendPacket, uConfAddr);
+		uSendPacket = uConfAddr;
+	}
+
+#ifdef _WIN64
+	size_t iWorkingAob = -1;
+	ULONG_PTR uSendPacket_EH = r.Scan(AOB_SendPacket_EH, _countof(AOB_SendPacket_EH), iWorkingAob);
+	SCANRES(uSendPacket_EH);
+
+	if (uSendPacket && uSendPacket_EH) {
+		uSendPacket_EH_Ret = uSendPacket_EH + Offset_SendPacket_EH_Ret[iWorkingAob];
+		*(ULONG_PTR *)&bEnterSendPacket[0x06] = uSendPacket_EH_Ret;
+		*(ULONG_PTR *)&bEnterSendPacket[0x11] = (ULONG_PTR)*_SendPacket;
+		bEnterSendPacket[3] = ((BYTE *)uSendPacket_EH_Ret)[3]; // add rsp,XX -> sub rsp,XX
+
+		uCClientSocket = uSendPacket_EH + Offset_SendPacket_EH_CClientSocket[iWorkingAob];
+		uCClientSocket += *(signed long int *)(uCClientSocket + 0x01) + 0x05;
+		_CClientSocket = (decltype(_CClientSocket))uCClientSocket;
+		DEBUG(L"uCClientSocket = " + QWORDtoString(uCClientSocket));
+		SHookFunction(SendPacket_EH, uSendPacket_EH);
+	}
+#else
+	if (_SendPacket) {
+		uEnterSendPacket = r.Scan(AOB_EnterSendPacket[0], ScannerEnterSendPacket);
+		if (!uEnterSendPacket) {
+			uEnterSendPacket = r.Scan(AOB_EnterSendPacket[1], ScannerEnterSendPacket_188);
+		}
+		if (uEnterSendPacket) {
+			SHookFunction(EnterSendPacket, uEnterSendPacket);
+		}
+		SCANRES(uEnterSendPacket);
+		SCANRES(uEnterSendPacket_ret);
+		SCANRES(uCClientSocket);
+	}
+#endif
+
+#ifdef _WIN64
+	if (_SendPacket && uSendPacket_EH) {
+#else
+	if (_SendPacket) {
+#endif
+		uConfAddr = ConftoAddress(conf, L"COutPacket__COutPacket");
+		if (uConfAddr) {
+			SHookFunction(COutPacket, uConfAddr);
+		}
+#ifndef _WIN64
+		// old version
+		if (!_COutPacket) {
+			uConfAddr = ConftoAddress(conf, L"COutPacket_OLD");
+			if (uConfAddr) {
+				SHookFunction(COutPacket_Old, uConfAddr);
+			}
+		}
+#endif
+		uConfAddr = ConftoAddress(conf, L"COutPacket__Encode1");
+		if (uConfAddr) {
+			SHookFunction(Encode1, uConfAddr);
+		}
+		uConfAddr = ConftoAddress(conf, L"COutPacket__Encode2");
+		if (uConfAddr) {
+			SHookFunction(Encode2, uConfAddr);
+		}
+		uConfAddr = ConftoAddress(conf, L"COutPacket__Encode4");
+		if (uConfAddr) {
+			SHookFunction(Encode4, uConfAddr);
+		}
+#ifdef _WIN64
+		uConfAddr = ConftoAddress(conf, L"COutPacket__Encode8");
+		if (uConfAddr) {
+			SHookFunction(Encode8, uConfAddr);
+		}
+#endif
+		uConfAddr = ConftoAddress(conf, L"COutPacket__EncodeStr");
+		if (uConfAddr) {
+			SHookFunction(EncodeStr, uConfAddr);
+		}
+		uConfAddr = ConftoAddress(conf, L"COutPacket__EncodeBuffer");
+		if (uConfAddr) {
+			SHookFunction(EncodeBuffer, uConfAddr);
+		}
+	}
+
+	uConfAddr = ConftoAddress(conf, L"CClientSocket__ProcessPacket");
+	if (uConfAddr) {
+		SHookFunction(ProcessPacket, uConfAddr);
+	}
+	if (_ProcessPacket) {
+		uConfAddr = ConftoAddress(conf, L"CInPacket__Decode1");
+		if (uConfAddr) {
+			SHookFunction(Decode1, uConfAddr);
+		}
+		uConfAddr = ConftoAddress(conf, L"CInPacket__Decode2");
+		if (uConfAddr) {
+			SHookFunction(Decode2, uConfAddr);
+		}
+		uConfAddr = ConftoAddress(conf, L"CInPacket__Decode4");
+		if (uConfAddr) {
+			SHookFunction(Decode4, uConfAddr);
+		}
+#ifdef _WIN64
+		uConfAddr = ConftoAddress(conf, L"CInPacket__Decode8");
+		if (uConfAddr) {
+			SHookFunction(Decode8, uConfAddr);
+		}
+#endif
+		uConfAddr = ConftoAddress(conf, L"CInPacket__DecodeStr");
+		if (uConfAddr) {
+			SHookFunction(DecodeStr, uConfAddr);
+		}
+		uConfAddr = ConftoAddress(conf, L"CInPacket__DecodeBuffer");
+		if (uConfAddr) {
+			SHookFunction(DecodeBuffer, uConfAddr);
+		}
+	}
+
+	std::wstring wDir;
+	if (GetDir(wDir, hinstDLL)) {
+		target_pid = GetCurrentProcessId();
+		std::wstring param = std::to_wstring(target_pid) + L" MapleStoryClass";
+#ifndef _WIN64
+		ShellExecuteW(NULL, NULL, (wDir + L"\\RirePE.exe").c_str(), param.c_str(), wDir.c_str(), SW_SHOW);
+#else
+		ShellExecuteW(NULL, NULL, (wDir + L"\\RirePE64.exe").c_str(), param.c_str(), wDir.c_str(), SW_SHOW);
+#endif
+	}
+
+	StartPipeClient();
+	RunPacketSender();
+	return true;
+}
+
+bool PacketHook(HINSTANCE hinstDLL) {
+	Config conf(INI_FILE_NAME, hinstDLL);
+	std::wstring wText;
+	if (conf.Read(DLL_NAME, L"USE_INI", wText) && _wtoi(wText.c_str())) {
+		DEBUG(L"use ini");
+		HANDLE hThread = CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)PacketHook_Conf, hinstDLL, NULL, NULL);
+		if (hThread) {
+			CloseHandle(hThread);
+		}
+		return true;
+	}
+
+	HANDLE hThread = CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)PacketHook_Thread, hinstDLL, NULL, NULL);
 	if (hThread) {
 		CloseHandle(hThread);
 	}
