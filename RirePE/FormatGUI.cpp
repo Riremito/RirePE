@@ -488,7 +488,7 @@ std::wstring GetFormatType_MySrc(PacketData &pd, PacketFormat &pf) {
 	}
 	case ENCODE1:
 	{
-		return L"p.Decode1" + argpart;
+		return L"Decode1" + argpart;
 	}
 	case DECODE1:
 	{
@@ -496,7 +496,7 @@ std::wstring GetFormatType_MySrc(PacketData &pd, PacketFormat &pf) {
 	}
 	case ENCODE2:
 	{
-		return L"p.Decode2" + argpart;
+		return L"Decode2" + argpart;
 	}
 	case DECODE2:
 	{
@@ -504,7 +504,7 @@ std::wstring GetFormatType_MySrc(PacketData &pd, PacketFormat &pf) {
 	}
 	case ENCODE4:
 	{
-		return L"p.Decode4" + argpart;
+		return L"Decode4" + argpart;
 	}
 	case DECODE4:
 	{
@@ -512,7 +512,7 @@ std::wstring GetFormatType_MySrc(PacketData &pd, PacketFormat &pf) {
 	}
 	case ENCODE8:
 	{
-		return L"p.Decode8" + argpart;
+		return L"Decode8" + argpart;
 	}
 	case DECODE8:
 	{
@@ -520,7 +520,7 @@ std::wstring GetFormatType_MySrc(PacketData &pd, PacketFormat &pf) {
 	}
 	case ENCODESTR:
 	{
-		return L"p.DecodeStr" + argpart;
+		return L"DecodeStr" + argpart;
 	}
 	case DECODESTR:
 	{
@@ -528,7 +528,7 @@ std::wstring GetFormatType_MySrc(PacketData &pd, PacketFormat &pf) {
 	}
 	case ENCODEBUFFER:
 	{
-		return L"p.DecodeBuffer" + argpart;
+		return L"DecodeBuffer" + argpart;
 	}
 	case DECODEBUFFER:
 	{
