@@ -88,7 +88,8 @@ void(*_DecodeBuffer)(InPacket *p, BYTE *b, DWORD len) = NULL;
 #else
 void(__thiscall *_SendPacket)(void *ecx, OutPacket *p) = NULL;
 void(__thiscall *_COutPacket)(OutPacket *p, WORD w) = NULL;
-void(__thiscall *_COutPacket_Old)(OutPacket *p, WORD w, DWORD dw) = NULL;
+void(__thiscall *_COutPacket_2)(OutPacket *p, WORD w, DWORD dw) = NULL;
+void(__thiscall *_COutPacket_3)(OutPacket *p, WORD w, DWORD dw1, DWORD dw2) = NULL;
 void(__thiscall *_Encode1)(OutPacket *p, BYTE b) = NULL;
 void(__thiscall *_Encode2)(OutPacket *p, WORD w) = NULL;
 void(__thiscall *_Encode4)(OutPacket *p, DWORD dw) = NULL;
@@ -369,8 +370,8 @@ void __fastcall  COutPacket_Hook(OutPacket *p, void *edx, WORD w) {
 	AddQueue(pxi);
 
 #ifndef _WIN64
-	if (!_COutPacket && _COutPacket_Old) {
-		return _COutPacket_Old(p, w, 0);
+	if (!_COutPacket && _COutPacket_2) {
+		return _COutPacket_2(p, w, 0);
 	}
 #endif
 	return _COutPacket(p, w);
@@ -378,11 +379,18 @@ void __fastcall  COutPacket_Hook(OutPacket *p, void *edx, WORD w) {
 
 #ifndef _WIN64
 // v131.0
-void __fastcall  COutPacket_Old_Hook(OutPacket *p, void *edx, WORD w, DWORD dw) {
+void __fastcall  COutPacket_2_Hook(OutPacket *p, void *edx, WORD w, DWORD dw) {
 	PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODEHEADER, 0, sizeof(WORD), 0, (ULONG_PTR)p };
 	ClearQueue(p);
 	AddQueue(pxi);
-	return _COutPacket_Old(p, w, dw);
+	return _COutPacket_2(p, w, dw);
+}
+// GMS v62.1
+void __fastcall  COutPacket_3_Hook(OutPacket *p, void *edx, WORD w, DWORD dw1, DWORD dw2) {
+	PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODEHEADER, 0, sizeof(WORD), 0, (ULONG_PTR)p };
+	ClearQueue(p);
+	AddQueue(pxi);
+	return _COutPacket_3(p, w, dw1, dw2);
 }
 #endif
 
@@ -688,7 +696,10 @@ bool PacketHook_Thread(HINSTANCE hinstDLL) {
 #ifndef _WIN64
 		// old version
 		if (!_COutPacket) {
-			AOBHook(COutPacket_Old);
+			AOBHook(COutPacket_2);
+			if (!_COutPacket_2) {
+				AOBHook(COutPacket_3);
+			}
 		}
 #endif
 		AOBHook(Encode1);
@@ -819,9 +830,15 @@ bool PacketHook_Conf(HINSTANCE hinstDLL) {
 #ifndef _WIN64
 		// old version
 		if (!_COutPacket) {
-			uConfAddr = ConftoAddress(conf, L"COutPacket_OLD");
+			uConfAddr = ConftoAddress(conf, L"COutPacket_2");
 			if (uConfAddr) {
-				SHookFunction(COutPacket_Old, uConfAddr);
+				SHookFunction(COutPacket_2, uConfAddr);
+			}
+		}
+		if (!_COutPacket && !_COutPacket_2) {
+			uConfAddr = ConftoAddress(conf, L"COutPacket_3");
+			if (uConfAddr) {
+				SHookFunction(COutPacket_3, uConfAddr);
 			}
 		}
 #endif
