@@ -87,6 +87,7 @@ char** (*_DecodeStr)(InPacket *p, char **s) = NULL;
 void(*_DecodeBuffer)(InPacket *p, BYTE *b, DWORD len) = NULL;
 #else
 void(__thiscall *_SendPacket)(void *ecx, OutPacket *p) = NULL;
+void(__thiscall *_SendPacket_2)(void *ecx, OutPacket *p, DWORD v2) = NULL;
 void(__thiscall *_COutPacket)(OutPacket *p, WORD w) = NULL;
 void(__thiscall *_COutPacket_2)(OutPacket *p, WORD w, DWORD dw) = NULL;
 void(__thiscall *_COutPacket_3)(OutPacket *p, WORD w, DWORD dw1, DWORD dw2) = NULL;
@@ -358,6 +359,17 @@ void __fastcall SendPacket_Hook(void *ecx, void *edx, OutPacket *p) {
 	}
 	return _SendPacket(ecx, p);
 }
+
+void __fastcall SendPacket_2_Hook(void *ecx, void *edx, OutPacket *p, DWORD v2) {
+	if (uEnterSendPacket_ret != (ULONG_PTR)_ReturnAddress()) {
+		bool bBlock = false;
+		AddSendPacket(p, (DWORD)_ReturnAddress(), bBlock);
+		if (bBlock) {
+			return;
+		}
+	}
+	return _SendPacket_2(ecx, p, v2);
+}
 #endif
 
 #ifdef _WIN64
@@ -584,6 +596,7 @@ void __fastcall DecodeBuffer_Hook(InPacket *p, void *edx, BYTE *b, DWORD len) {
 #else
 // Packet Injector
 ULONG_PTR uSendPacket = 0;
+ULONG_PTR uSendPacket_2 = 0;
 ULONG_PTR uEnterSendPacket = 0;
 ULONG_PTR uEnterSendPacket_ret = 0;
 ULONG_PTR uCClientSocket = 0;
@@ -654,6 +667,11 @@ bool PacketHook_Thread(HINSTANCE hinstDLL) {
 #endif
 
 	AOBHookWithResult(SendPacket);
+#ifndef _WIN64
+	if (!_SendPacket) {
+		AOBHookWithResult(SendPacket_2);
+	}
+#endif
 
 #ifdef _WIN64
 	size_t iWorkingAob = -1;
@@ -690,7 +708,7 @@ bool PacketHook_Thread(HINSTANCE hinstDLL) {
 #ifdef _WIN64
 	if (uSendPacket && uSendPacket_EH) {
 #else
-	if (uSendPacket) {
+	if (uSendPacket || uSendPacket_2) {
 #endif
 		AOBHook(COutPacket);
 #ifndef _WIN64
@@ -786,6 +804,16 @@ bool PacketHook_Conf(HINSTANCE hinstDLL) {
 		uSendPacket = uConfAddr;
 	}
 
+#ifndef _WIN64
+	// old version
+	if (!_SendPacket) {
+		uConfAddr = ConftoAddress(conf, L"CClientSocket__SendPacket_2");
+		if (uConfAddr) {
+			SHookFunction(SendPacket_2, uConfAddr);
+		}
+	}
+#endif
+
 #ifdef _WIN64
 	size_t iWorkingAob = -1;
 	ULONG_PTR uSendPacket_EH = r.Scan(AOB_SendPacket_EH, _countof(AOB_SendPacket_EH), iWorkingAob);
@@ -821,7 +849,7 @@ bool PacketHook_Conf(HINSTANCE hinstDLL) {
 #ifdef _WIN64
 	if (_SendPacket && uSendPacket_EH) {
 #else
-	if (_SendPacket) {
+	if (_SendPacket || _SendPacket_2) {
 #endif
 		uConfAddr = ConftoAddress(conf, L"COutPacket__COutPacket");
 		if (uConfAddr) {
