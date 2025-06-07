@@ -392,7 +392,7 @@ bool MainGUI(HINSTANCE hInstance) {
 #ifdef _WIN64
 	Alice a(L"PacketEditorClass64", L"Rire PE x64", PE_WIDTH, PE_HEIGHT, hInstance);
 #else
-	Alice a(L"PacketEditorClass", L"Rire PE x86", PE_WIDTH, PE_HEIGHT, hInstance);
+	Alice a(L"PacketEditorClass", L"Rire PE x86 (2025/06)", PE_WIDTH, PE_HEIGHT, hInstance);
 #endif
 
 	SetMainGUI(&a);

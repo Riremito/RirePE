@@ -72,8 +72,26 @@ bool AddFormat(PacketData &pd, PacketEditorMessage &pem) {
 				pd.status = 1;
 			}
 		}
+
 		return true;
 	}
+
+	// 正常にdecode or encode出来ていない場合は穴埋めする
+	// THMS88+ mode
+	/*
+	if (DECODE_BEGIN <= pem.header && pem.header <= DECODE_END) {
+		while (pd.used < pem.Extra.pos) {
+			PacketFormat unk = {};
+			unk.type = DECODE1;
+			unk.pos = pd.used;
+			unk.size = 1;
+			unk.addr = 0;
+			pd.format.push_back(unk);
+			pd.status = -1;
+			pd.used += unk.size;
+		}
+	}
+	*/
 
 	// パケットロック
 	if (pem.header == DECODE_END) {
@@ -90,7 +108,7 @@ bool AddFormat(PacketData &pd, PacketEditorMessage &pem) {
 		return true;
 	}
 
-	// 正常にdecode or encode出来ていない場合は穴埋めする
+	// not used
 	if (pd.used < pem.Extra.pos) {
 		PacketFormat unk = {};
 		unk.type = UNKNOWNDATA;
@@ -100,8 +118,9 @@ bool AddFormat(PacketData &pd, PacketEditorMessage &pem) {
 		pd.format.push_back(unk);
 		pd.status = -1;
 		pd.used += unk.size;
-		return false;
+		return false;// test
 	}
+
 
 	// フォーマットを登録
 	PacketFormat pf = {};

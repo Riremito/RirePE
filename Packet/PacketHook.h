@@ -3,6 +3,33 @@
 #include<Windows.h>
 #include<string>
 
+
+typedef struct {
+	HINSTANCE hinstDLL;
+	bool debug_mode;
+	bool use_thread;
+	bool use_addr;
+	ULONG_PTR addr_SendPacket;
+	ULONG_PTR addr_SendPacket2; // extra argument
+	ULONG_PTR addr_COutPacket;
+	ULONG_PTR addr_COutPacket2; // extra argument
+	ULONG_PTR addr_COutPacket3; // extra argument
+	ULONG_PTR addr_Encode1;
+	ULONG_PTR addr_Encode2;
+	ULONG_PTR addr_Encode4;
+	ULONG_PTR addr_Encode8;
+	ULONG_PTR addr_EncodeStr;
+	ULONG_PTR addr_EncodeBuffer;
+	ULONG_PTR addr_ProcessPacket;
+	ULONG_PTR addr_Decode1;
+	ULONG_PTR addr_Decode2;
+	ULONG_PTR addr_Decode4;
+	ULONG_PTR addr_Decode8;
+	ULONG_PTR addr_DecodeStr;
+	ULONG_PTR addr_DecodeBuffer;
+} HookSettings;
+
+
 #pragma pack(push, 1)
 // x64
 #ifdef _WIN64
@@ -68,40 +95,40 @@ typedef struct {
 typedef struct {
 	DWORD unk1; // 0
 	DWORD unk2; // 0x02
-	BYTE *packet; // unk4bytes + packet
-	WORD length1; // data length
-	WORD unk5; // unk 2 bytes?
-	WORD length2; // packet length
-	WORD unk7; // ??
-	DWORD decoded; // from 0x04 to decoded
+	BYTE *packet;
+	WORD fullsize; // data length
+	WORD unk5;
+	WORD size; // packet length
+	WORD unk7;
+	DWORD decoded;
 } InPacket;
 #endif
 #pragma pack(pop)
 
-bool PacketHook(HINSTANCE hinstDLL);
+bool PacketHook(HookSettings &hs);
 bool SetCallBack();
 bool RunPacketSender();
 
 #ifdef _WIN64
-void ProcessPacket_Hook(void *pCClientSocket, InPacket *p);
-void COutPacket_Hook(OutPacket *p, WORD w);
-void SendPacket_Hook(void *pCClientSocket, OutPacket *p);
-void SendPacket_EH_Hook(OutPacket *p);
+void ProcessPacket_Hook(void *pCClientSocket, InPacket *ip);
+void COutPacket_Hook(OutPacket *op, WORD w);
+void SendPacket_Hook(void *pCClientSocket, OutPacket *op);
+void SendPacket_EH_Hook(OutPacket *op);
 
 // original functions
-extern void(*_COutPacket)(OutPacket *p, WORD w); // ヘッダの暗号化チェック用
-extern void(*_SendPacket_EH)(OutPacket *p); // ヘッダの暗号化有効時に呼び出す
-extern void(*_EnterSendPacket)(void *pCClientSocket, OutPacket *p); // ヘッダの暗号化無効時に呼び出す
-extern void(*_ProcessPacket)(void *pCClientSocket, InPacket *p);
+extern void(*_COutPacket)(OutPacket *op, WORD w); // ヘッダの暗号化チェック用
+extern void(*_SendPacket_EH)(OutPacket *op); // ヘッダの暗号化有効時に呼び出す
+extern void(*_EnterSendPacket)(void *pCClientSocket, OutPacket *op); // ヘッダの暗号化無効時に呼び出す
+extern void(*_ProcessPacket)(void *pCClientSocket, InPacket *ip);
 extern void* (*_CClientSocket)(void);
 #else
 
-void __fastcall  COutPacket_Hook(OutPacket *p, void *edx, WORD w);
-void __fastcall SendPacket_Hook(void *pCClientSocket, void *edx, OutPacket *p);
-void __fastcall ProcessPacket_Hook(void *pCClientSocket, void *edx, InPacket *p);
+void __fastcall  COutPacket_Hook(OutPacket *op, void *edx, WORD w);
+void __fastcall SendPacket_Hook(void *pCClientSocket, void *edx, OutPacket *op);
+void __fastcall ProcessPacket_Hook(void *pCClientSocket, void *edx, InPacket *ip);
 // sender
 extern ULONG_PTR uEnterSendPacket_ret;
-void EnterSendPacket_Hook(OutPacket *p);
+void EnterSendPacket_Hook(OutPacket *op);
 ULONG_PTR GetCClientSocket();
 #endif
 

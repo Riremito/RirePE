@@ -28,11 +28,16 @@ bool FVOnCreate(Alice &fv) {
 	fv.TextArea(FV_EDIT_INFO, 3, (FV_HEIGHT / 2), (FV_WIDTH - 6), (FV_HEIGHT / 2 - 6) - 20);
 	SendDlgItemMessageW(fv.GetMainHWND(), FV_EDIT_INFO, EM_SETLIMITTEXT, (WPARAM)0x100000, 0);
 	//fv.ReadOnly(FV_EDIT_INFO);
+	fv.Button(FV_SEND, L"Send", (FV_WIDTH - 3) - 210, (FV_HEIGHT - 3) - 20, 100);
+	fv.ChangeState(FV_SEND, false);
 	fv.Button(FV_RECV, L"Recv", (FV_WIDTH - 3) - 100, (FV_HEIGHT - 3) - 20, 100);
 	return true;
 }
 
 bool FVOnCommand(Alice &fv, int nIDDlgItem) {
+	if (nIDDlgItem == FV_SEND) {
+		return true;
+	}
 	if (nIDDlgItem == FV_RECV) {
 		Alice &main_gui = GetMainGUI();
 		std::wstring wText = fv.GetText(FV_EDIT_INFO);
