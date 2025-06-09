@@ -52,7 +52,6 @@ bool OutPacketLogging(MessageHeader type, OutPacket *op, void *retAddr) {
 
 
 void AddExtra(PacketExtraInformation &pxi) {
-	//EnterCriticalSection(&cs);
 	union {
 		PacketEditorMessage *pem;
 		BYTE *b;
@@ -61,7 +60,6 @@ void AddExtra(PacketExtraInformation &pxi) {
 	b = new BYTE[sizeof(PacketEditorMessage) + pxi.size];
 
 	if (!pem) {
-		//LeaveCriticalSection(&cs);
 		return;
 	}
 
@@ -85,7 +83,6 @@ void AddExtra(PacketExtraInformation &pxi) {
 	}
 
 	delete pem;
-	//LeaveCriticalSection(&cs);
 }
 
 // for SendPacket format
@@ -133,7 +130,6 @@ void AddExtraAll(OutPacket *op) {
 
 void AddSendPacket(OutPacket *op, ULONG_PTR addr, bool &bBlock) {
 	AddExtraAll(op);
-	//EnterCriticalSection(&cs);
 	union {
 		PacketEditorMessage *pem;
 		BYTE *b;
@@ -142,7 +138,6 @@ void AddSendPacket(OutPacket *op, ULONG_PTR addr, bool &bBlock) {
 	b = new BYTE[sizeof(PacketEditorMessage) + op->encoded];
 
 	if (!b) {
-		//LeaveCriticalSection(&cs);
 		return;
 	}
 
@@ -174,11 +169,9 @@ void AddSendPacket(OutPacket *op, ULONG_PTR addr, bool &bBlock) {
 	}
 
 	delete[] b;
-	//LeaveCriticalSection(&cs);
 }
 
 void AddRecvPacket(InPacket *ip, ULONG_PTR addr, bool &bBlock) {
-	//EnterCriticalSection(&cs);
 	union {
 		PacketEditorMessage *pem;
 		BYTE *b;
@@ -186,7 +179,6 @@ void AddRecvPacket(InPacket *ip, ULONG_PTR addr, bool &bBlock) {
 
 	b = new BYTE[sizeof(PacketEditorMessage) + ip->size];
 	if (!b) {
-		//LeaveCriticalSection(&cs);
 		return;
 	}
 
@@ -211,7 +203,6 @@ void AddRecvPacket(InPacket *ip, ULONG_PTR addr, bool &bBlock) {
 	}
 
 	delete[] b;
-	//LeaveCriticalSection(&cs);
 }
 
 PipeClient *pc = NULL;

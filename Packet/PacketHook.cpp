@@ -1,12 +1,13 @@
 ﻿#include"../Share/Simple/Simple.h"
 #include"../Share/Hook/SimpleHook.h"
-#include"../RirePE/RirePE.h"
 #include"../Packet/PacketHook.h"
 #include"../Packet/AobList.h"
 #include"../Packet/PacketLogging.h"
 #include<vector>
 #include<intrin.h>
 #pragma intrinsic(_ReturnAddress)
+
+bool gDebugMode = false;
 
 #ifdef _WIN64
 void(*_SendPacket)(void *rcx, OutPacket *op) = NULL;
@@ -28,23 +29,23 @@ ULONG_PTR(*_Decode8)(InPacket *ip) = NULL;
 char** (*_DecodeStr)(InPacket *ip, char **s) = NULL;
 void(*_DecodeBuffer)(InPacket *ip, BYTE *b, DWORD len) = NULL;
 #else
-void(__thiscall *_SendPacket)(void *ecx, OutPacket *op) = NULL;
-void(__thiscall *_SendPacket_2)(void *ecx, OutPacket *op, DWORD v2) = NULL;
-void(__thiscall *_COutPacket)(OutPacket *op, WORD w) = NULL;
-void(__thiscall *_COutPacket_2)(OutPacket *op, WORD w, DWORD dw) = NULL;
-void(__thiscall *_COutPacket_3)(OutPacket *op, WORD w, DWORD dw1, DWORD dw2) = NULL;
-void(__thiscall *_Encode1)(OutPacket *op, BYTE b) = NULL;
-void(__thiscall *_Encode2)(OutPacket *op, WORD w) = NULL;
-void(__thiscall *_Encode4)(OutPacket *op, DWORD dw) = NULL;
-void(__thiscall *_EncodeStr)(OutPacket *op, char *s) = NULL;
-void(__thiscall *_EncodeBuffer)(OutPacket *op, BYTE *b, DWORD len) = NULL;
+void (__thiscall *_SendPacket)(void *ecx, OutPacket *op) = NULL;
+void (__thiscall *_SendPacket_2)(void *ecx, OutPacket *op, DWORD v2) = NULL;
+void (__thiscall *_COutPacket)(OutPacket *op, WORD w) = NULL;
+void (__thiscall *_COutPacket_2)(OutPacket *op, WORD w, DWORD dw) = NULL;
+void (__thiscall *_COutPacket_3)(OutPacket *op, WORD w, DWORD dw1, DWORD dw2) = NULL;
+void (__thiscall *_Encode1)(OutPacket *op, BYTE b) = NULL;
+void (__thiscall *_Encode2)(OutPacket *op, WORD w) = NULL;
+void (__thiscall *_Encode4)(OutPacket *op, DWORD dw) = NULL;
+void (__thiscall *_EncodeStr)(OutPacket *op, char *s) = NULL;
+void (__thiscall *_EncodeBuffer)(OutPacket *op, BYTE *b, DWORD len) = NULL;
 
-void(__thiscall *_ProcessPacket)(void *ecx, InPacket *ip) = NULL;
-BYTE(__thiscall *_Decode1)(InPacket *ip) = NULL;
-WORD(__thiscall *_Decode2)(InPacket *ip) = NULL;
-DWORD(__thiscall *_Decode4)(InPacket *ip) = NULL;
+void (__thiscall *_ProcessPacket)(void *ecx, InPacket *ip) = NULL;
+BYTE (__thiscall *_Decode1)(InPacket *ip) = NULL;
+WORD (__thiscall *_Decode2)(InPacket *ip) = NULL;
+DWORD (__thiscall *_Decode4)(InPacket *ip) = NULL;
 char** (__thiscall *_DecodeStr)(InPacket *ip, char **s) = NULL;
-void(__thiscall *_DecodeBuffer)(InPacket *ip, BYTE *b, DWORD len) = NULL;
+void (__thiscall *_DecodeBuffer)(InPacket *ip, BYTE *b, DWORD len) = NULL;
 #endif
 
 
@@ -233,7 +234,9 @@ void __fastcall ProcessPacket_Hook(void *pCClientSocket, void *edx, InPacket *ip
 		CountUpPacketID(packet_id_in);
 		//PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)0, DECODE_BEGIN, 0, ip->size, &ip->packet[ip->decoded] };
 		//AddExtra(pxi);
-
+		if (gDebugMode) {
+			DEBUG(L"in @" + WORDtoString(*(WORD *)&ip->packet[4]) + L" --- ProcessPacket start");
+		}
 		bool bBlock = false;
 		AddRecvPacket(ip, (ULONG_PTR)_ReturnAddress(), bBlock);
 		if (!bBlock) {
@@ -241,6 +244,9 @@ void __fastcall ProcessPacket_Hook(void *pCClientSocket, void *edx, InPacket *ip
 		}
 		PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)0, DECODE_END, ip->decoded, 0 };
 		AddExtra(pxi);
+		if (gDebugMode) {
+			DEBUG(L"in @" + WORDtoString(*(WORD *)&ip->packet[4]) + L" --- ProcessPacket end");
+		}
 	}
 	else {
 		_ProcessPacket(pCClientSocket, ip);
@@ -253,6 +259,9 @@ BYTE Decode1_Hook(InPacket *ip) {
 BYTE __fastcall Decode1_Hook(InPacket *ip) {
 #endif
 	if (ip->unk2 == 0x02) {
+		if (gDebugMode) {
+			DEBUG(L"in @" + WORDtoString(*(WORD *)&ip->packet[4]) + L" --- Decode1");
+		}
 		PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)_ReturnAddress(), DECODE1, ip->decoded - 4, sizeof(BYTE) };
 		AddExtra(pxi);
 		// update
@@ -269,6 +278,9 @@ WORD __fastcall Decode2_Hook(InPacket *ip) {
 #endif
 	if (ip->unk2 == 0x02) {
 		if (ip->decoded == 4) {
+			if (gDebugMode) {
+				DEBUG(L"in @" + WORDtoString(*(WORD *)&ip->packet[4]) + L" --- Decode2 (Header)");
+			}
 			PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)_ReturnAddress(), DECODEHEADER, ip->decoded - 4, sizeof(WORD) };
 			AddExtra(pxi);
 			// update
@@ -276,6 +288,9 @@ WORD __fastcall Decode2_Hook(InPacket *ip) {
 			AddExtra(pxi);
 		}
 		else {
+			if (gDebugMode) {
+				DEBUG(L"in @" + WORDtoString(*(WORD *)&ip->packet[4]) + L" --- Decode2");
+			}
 			PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)_ReturnAddress(), DECODE2, ip->decoded - 4, sizeof(WORD) };
 			AddExtra(pxi);
 			// update
@@ -292,6 +307,9 @@ DWORD Decode4_Hook(InPacket *ip) {
 DWORD __fastcall Decode4_Hook(InPacket *ip) {
 #endif
 	if (ip->unk2 == 0x02) {
+		if (gDebugMode) {
+			DEBUG(L"in @" + WORDtoString(*(WORD *)&ip->packet[4]) + L" --- Decode4");
+		}
 		PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)_ReturnAddress(), DECODE4, ip->decoded - 4, sizeof(DWORD) };
 		AddExtra(pxi);
 		// update
@@ -320,6 +338,9 @@ char** DecodeStr_Hook(InPacket *ip, char **s) {
 char** __fastcall DecodeStr_Hook(InPacket *ip, void *edx, char **s) {
 #endif
 	if (ip->unk2 == 0x02) {
+		if (gDebugMode) {
+			DEBUG(L"in @" + WORDtoString(*(WORD *)&ip->packet[4]) + L" --- DecodeStr");
+		}
 		PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)_ReturnAddress(), DECODESTR, ip->decoded - 4, sizeof(WORD) + *(WORD *)&ip->packet[ip->decoded] };
 		AddExtra(pxi);
 		// update
@@ -335,6 +356,9 @@ void DecodeBuffer_Hook(InPacket *ip, BYTE *b, DWORD len) {
 void __fastcall DecodeBuffer_Hook(InPacket *ip, void *edx, BYTE *b, DWORD len) {
 #endif
 	if (ip->unk2 == 0x02) {
+		if (gDebugMode) {
+			DEBUG(L"in @" + WORDtoString(*(WORD *)&ip->packet[4]) + L" --- DecodeBuffer");
+		}
 		PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)_ReturnAddress(), DECODEBUFFER, ip->decoded - 4, len };
 		AddExtra(pxi);
 		// update
@@ -344,21 +368,6 @@ void __fastcall DecodeBuffer_Hook(InPacket *ip, void *edx, BYTE *b, DWORD len) {
 	return _DecodeBuffer(ip, b, len);
 }
 
-
-int target_pid = 0;
-std::wstring GetPipeNameLogger() {
-	if (target_pid) {
-		return PE_LOGGER_PIPE_NAME + std::to_wstring(target_pid);
-	}
-	return PE_LOGGER_PIPE_NAME;
-	}
-
-std::wstring GetPipeNameSender() {
-	if (target_pid) {
-		return PE_SENDER_PIPE_NAME + std::to_wstring(target_pid);
-	}
-	return PE_SENDER_PIPE_NAME;
-}
 
 #ifdef _WIN64
 #else
@@ -633,50 +642,5 @@ bool PacketHook_Conf(HookSettings &hs) {
 		}
 	}
 
-	return true;
-}
-
-bool RunRirePE(HookSettings &hs) {
-	std::wstring wDir;
-	if (GetDir(wDir, hs.hinstDLL)) {
-		target_pid = GetCurrentProcessId();
-		std::wstring param = std::to_wstring(target_pid) + L" MapleStoryClass";
-#ifndef _WIN64
-		ShellExecuteW(NULL, NULL, (wDir + L"\\RirePE.exe").c_str(), param.c_str(), wDir.c_str(), SW_SHOW);
-#else
-		ShellExecuteW(NULL, NULL, (wDir + L"\\RirePE64.exe").c_str(), param.c_str(), wDir.c_str(), SW_SHOW);
-#endif
-	}
-	return true;
-}
-
-bool PipeStartup(HookSettings &hs) {
-	HANDLE hThread = CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)RunRirePE, &hs, NULL, NULL);
-	if (hThread) {
-		CloseHandle(hThread);
-	}
-	StartPipeClient();
-	RunPacketSender();
-	return true;
-}
-
-bool PacketHook(HookSettings &hs) {
-	PipeStartup(hs);
-	// use thread, DllMain sometimes causes timeout
-	if (hs.use_thread) {
-		LPTHREAD_START_ROUTINE thread_func = hs.use_addr ? (LPTHREAD_START_ROUTINE)PacketHook_Conf : (LPTHREAD_START_ROUTINE)PacketHook_Thread;
-		HANDLE hThread = CreateThread(NULL, NULL, thread_func, &hs, NULL, NULL);
-		if (hThread) {
-			CloseHandle(hThread);
-		}
-		return true;
-	}
-	// use conf
-	if (hs.use_addr) {
-		PacketHook_Conf(hs);
-		return true;
-	}
-	// aob scan mode (default)
-	PacketHook_Thread(hs);
 	return true;
 }

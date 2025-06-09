@@ -29,6 +29,12 @@ typedef struct {
 	ULONG_PTR addr_DecodeBuffer;
 } HookSettings;
 
+std::wstring GetPipeNameLogger();
+std::wstring GetPipeNameSender();
+
+bool PacketHook_Conf(HookSettings &hs);
+bool PacketHook_Thread(HookSettings &hs);
+
 
 #pragma pack(push, 1)
 // x64
@@ -105,7 +111,6 @@ typedef struct {
 #endif
 #pragma pack(pop)
 
-bool PacketHook(HookSettings &hs);
 bool SetCallBack();
 bool RunPacketSender();
 
@@ -131,8 +136,5 @@ extern ULONG_PTR uEnterSendPacket_ret;
 void EnterSendPacket_Hook(OutPacket *op);
 ULONG_PTR GetCClientSocket();
 #endif
-
-std::wstring GetPipeNameLogger();
-std::wstring GetPipeNameSender();
 
 #endif

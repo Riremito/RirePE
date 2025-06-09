@@ -1,4 +1,7 @@
 ﻿#include"../RirePE/MainGUI.h"
+
+bool gDebugMode = false;
+
 std::vector<PacketData> packet_data_out;
 std::vector<PacketData> packet_data_in;
 
@@ -16,28 +19,39 @@ std::vector<PacketData>& GetInPacketFormat() {
 }
 
 bool AddFormat(PacketData &pd, PacketEditorMessage &pem) {
+	if (gDebugMode && pem.header == RECVPACKET) {
+		DEBUG(L"RECVPACKET - 1");
+	}
 	// パケットロック済み
 	if (pd.lock) {
 		return false;
 	}
+	if (gDebugMode && pem.header == RECVPACKET) {
+		DEBUG(L"RECVPACKET - 2");
+	}
 
 	// パケットの復号検出
-	if (pem.Extra.update == FORMAT_UPDATE) {
-		if (pem.Extra.pos + pem.Extra.size <= pd.packet.size()) {
-			for (auto &pf : pd.format) {
-				if (pf.pos == pem.Extra.pos && pf.size == pem.Extra.size) {
-					for (DWORD i = 0; i < pem.Extra.size; i++) {
-						if (pd.packet[pem.Extra.pos + i] != pem.Extra.data[i]) {
-							pf.modified = true;
-							memcpy_s(&pd.packet[pem.Extra.pos], pem.Extra.size, &pem.Extra.data[0], pem.Extra.size);
-							return true;
+	if (DECODE_BEGIN <= pem.header && pem.header <= DECODE_END) {
+		if (pem.Extra.update == FORMAT_UPDATE) {
+			if (pem.Extra.pos + pem.Extra.size <= pd.packet.size()) {
+				for (auto &pf : pd.format) {
+					if (pf.pos == pem.Extra.pos && pf.size == pem.Extra.size) {
+						for (DWORD i = 0; i < pem.Extra.size; i++) {
+							if (pd.packet[pem.Extra.pos + i] != pem.Extra.data[i]) {
+								pf.modified = true;
+								memcpy_s(&pd.packet[pem.Extra.pos], pem.Extra.size, &pem.Extra.data[0], pem.Extra.size);
+								return true;
+							}
 						}
+						return false;
 					}
-					return false;
 				}
 			}
+			return false;
 		}
-		return false;
+	}
+	if (gDebugMode && pem.header == RECVPACKET) {
+		DEBUG(L"RECVPACKET - 3");
 	}
 
 	// パケットを登録
@@ -95,6 +109,9 @@ bool AddFormat(PacketData &pd, PacketEditorMessage &pem) {
 
 	// パケットロック
 	if (pem.header == DECODE_END) {
+		if (gDebugMode) {
+			DEBUG(L"DECODE_END");
+		}
 		pd.lock = TRUE;
 		if (pd.used < pd.packet.size()) {
 			PacketFormat unk = {};
@@ -119,6 +136,13 @@ bool AddFormat(PacketData &pd, PacketEditorMessage &pem) {
 		pd.status = -1;
 		pd.used += unk.size;
 		return false;// test
+	}
+
+
+	if (gDebugMode) {
+		if (DECODE_BEGIN <= pem.header && pem.header <= DECODE_END) {
+			DEBUG(L"Data Added --- " + DWORDtoString(pem.header));
+		}
 	}
 
 

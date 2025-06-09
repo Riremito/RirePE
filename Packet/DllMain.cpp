@@ -1,5 +1,7 @@
 ﻿#include"../Share/Simple/Simple.h"
 #include"../Packet/PacketHook.h"
+#include"../Packet/PacketLogging.h"
+#include"../RirePE/RirePE.h"
 
 #ifndef _WIN64
 #define DLL_NAME L"Packet"
@@ -112,6 +114,78 @@ bool SavePacketConfig() {
 }
 
 
+int target_pid = 0;
+std::wstring GetPipeNameLogger() {
+	if (target_pid) {
+		return PE_LOGGER_PIPE_NAME + std::to_wstring(target_pid);
+	}
+	return PE_LOGGER_PIPE_NAME;
+}
+
+std::wstring GetPipeNameSender() {
+	if (target_pid) {
+		return PE_SENDER_PIPE_NAME + std::to_wstring(target_pid);
+	}
+	return PE_SENDER_PIPE_NAME;
+}
+
+bool RunRirePE(HookSettings &hs) {
+	std::wstring wDir;
+	if (GetDir(wDir, hs.hinstDLL)) {
+		std::wstring param = std::to_wstring(target_pid) + L" MapleStoryClass";
+#ifndef _WIN64
+		ShellExecuteW(NULL, NULL, (wDir + L"\\RirePE.exe").c_str(), param.c_str(), wDir.c_str(), SW_SHOW);
+#else
+		ShellExecuteW(NULL, NULL, (wDir + L"\\RirePE64.exe").c_str(), param.c_str(), wDir.c_str(), SW_SHOW);
+#endif
+	}
+
+	StartPipeClient();
+	RunPacketSender();
+	return true;
+}
+
+bool PipeStartup(HookSettings &hs) {
+	target_pid = GetCurrentProcessId();
+	HANDLE hThread = CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)RunRirePE, &hs, NULL, NULL);
+	if (hThread) {
+		CloseHandle(hThread);
+	}
+	return true;
+}
+
+bool PacketHook(HookSettings &hs) {
+	PipeStartup(hs);
+	// use thread, DllMain sometimes causes timeout
+	if (hs.use_thread) {
+		LPTHREAD_START_ROUTINE thread_func = hs.use_addr ? (LPTHREAD_START_ROUTINE)PacketHook_Conf : (LPTHREAD_START_ROUTINE)PacketHook_Thread;
+		HANDLE hThread = CreateThread(NULL, NULL, thread_func, &hs, NULL, NULL);
+		if (hThread) {
+			CloseHandle(hThread);
+		}
+		return true;
+	}
+	// use conf
+	if (hs.use_addr) {
+		PacketHook_Conf(hs);
+		return true;
+	}
+	// aob scan mode (default)
+	PacketHook_Thread(hs);
+	return true;
+}
+
+
+/*
+	Packet.dll
+		load config.
+		run RirePE.exe.
+		create pipe.
+		hook functions. (aob or conf)
+		send data to RirePE.exe from hooks.
+	RirePE.exe
+		log packets.
+*/
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
 	if (fdwReason == DLL_PROCESS_ATTACH) {
 		DisableThreadLibraryCalls(hinstDLL);
