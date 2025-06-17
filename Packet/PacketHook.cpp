@@ -8,6 +8,7 @@
 #pragma intrinsic(_ReturnAddress)
 
 bool gDebugMode = false;
+bool gHighVersionMode = false;
 
 #ifdef _WIN64
 void(*_SendPacket)(void *rcx, OutPacket *op) = NULL;
@@ -242,7 +243,7 @@ void __fastcall ProcessPacket_Hook(void *pCClientSocket, void *edx, InPacket *ip
 		if (!bBlock) {
 			_ProcessPacket(pCClientSocket, ip);
 		}
-		PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)0, DECODE_END, ip->decoded, 0 };
+		PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)0, DECODE_END, ip->decoded - 4, 0 };
 		AddExtra(pxi);
 		if (gDebugMode) {
 			DEBUG(L"in @" + WORDtoString(*(WORD *)&ip->packet[4]) + L" --- ProcessPacket end");
@@ -432,7 +433,13 @@ bool ScannerEnterSendPacket_188(ULONG_PTR uAddress) {
 }
 #endif
 
+void SetGlobalSettings(HookSettings &hs) {
+	gDebugMode = hs.debug_mode;
+	gHighVersionMode = hs.high_version_mode;
+}
+
 bool PacketHook_Thread(HookSettings &hs) {
+	SetGlobalSettings(hs);
 	Rosemary r;
 	ULONG_PTR uProcessPacket = 0;
 #ifdef _WIN64
@@ -520,6 +527,7 @@ bool PacketHook_Thread(HookSettings &hs) {
 }
 
 bool PacketHook_Conf(HookSettings &hs) {
+	SetGlobalSettings(hs);
 	Rosemary r;
 	ULONG_PTR uProcessPacket = 0;
 #ifdef _WIN64

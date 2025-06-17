@@ -15,6 +15,14 @@
 
 #define PE_DEBUG 1
 
+typedef struct {
+	bool debug_mode;
+	bool thms88_mode;
+	int header_size;
+} PESettings;
+
+// logger -> fix header plz
+void SetGlobalSettings(PESettings &ps);
 
 bool MainGUI(HINSTANCE hInstance);
 Alice& GetMainGUI();

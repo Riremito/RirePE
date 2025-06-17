@@ -3,13 +3,6 @@
 #include"../Packet/PacketLogging.h"
 #include"../RirePE/RirePE.h"
 
-#ifndef _WIN64
-#define DLL_NAME L"Packet"
-#else
-#define DLL_NAME L"Packet64"
-#endif
-#define INI_FILE_NAME DLL_NAME".ini"
-
 
 ULONG_PTR StringtoAddress(std::wstring &wAddr) {
 	ULONG_PTR uAddr = 0;
@@ -44,6 +37,11 @@ bool LoadPacketConfig(HINSTANCE hinstDLL) {
 	std::wstring wUseThread;
 	if (conf.Read(DLL_NAME, L"USE_THREAD", wUseThread) && _wtoi(wUseThread.c_str())) {
 		hs.use_thread = true;
+	}
+	// high version mode (CInPacket), TODO
+	std::wstring wHighVersionMode;
+	if (conf.Read(DLL_NAME, L"HIGH_VERSION_MODE", wHighVersionMode) && _wtoi(wHighVersionMode.c_str())) {
+		hs.high_version_mode = true;
 	}
 	// hook without using aob scan
 	std::wstring wUseAddr;

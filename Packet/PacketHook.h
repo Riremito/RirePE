@@ -8,6 +8,7 @@ typedef struct {
 	HINSTANCE hinstDLL;
 	bool debug_mode;
 	bool use_thread;
+	bool high_version_mode;
 	bool use_addr;
 	ULONG_PTR addr_SendPacket;
 	ULONG_PTR addr_SendPacket2; // extra argument
@@ -89,7 +90,6 @@ typedef struct {
 } InPacket;
 #endif
 #else
-#define KMSVER 95
 // BB前
 typedef struct {
 	DWORD unk1; // 0x00
@@ -98,20 +98,29 @@ typedef struct {
 	DWORD unk4; // OutPacket
 } OutPacket;
 
-
 typedef struct {
 	DWORD unk1; // 0
 	DWORD unk2; // 0x02
 	BYTE *packet;
 	WORD fullsize; // data length
 	WORD unk5;
-#if KMSVER >= 197
-	DWORD unk_kms197;
-#endif
 	WORD size; // packet length
 	WORD unk7;
 	DWORD decoded;
 } InPacket;
+
+// KMS197+
+typedef struct {
+	DWORD unk1; // 0
+	DWORD unk2; // 0x02
+	BYTE *packet;
+	WORD fullsize; // data length
+	WORD unk5;
+	DWORD unk_kms197;
+	WORD size; // packet length
+	WORD unk7;
+	DWORD decoded;
+} InPacketKMS197;
 #endif
 #pragma pack(pop)
 
