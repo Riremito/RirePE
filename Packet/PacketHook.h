@@ -89,6 +89,7 @@ typedef struct {
 } InPacket;
 #endif
 #else
+#define KMSVER 95
 // BB前
 typedef struct {
 	DWORD unk1; // 0x00
@@ -104,6 +105,9 @@ typedef struct {
 	BYTE *packet;
 	WORD fullsize; // data length
 	WORD unk5;
+#if KMSVER >= 197
+	DWORD unk_kms197;
+#endif
 	WORD size; // packet length
 	WORD unk7;
 	DWORD decoded;

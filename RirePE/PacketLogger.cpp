@@ -90,23 +90,6 @@ bool AddFormat(PacketData &pd, PacketEditorMessage &pem) {
 		return true;
 	}
 
-	// 正常にdecode or encode出来ていない場合は穴埋めする
-	// THMS88+ mode
-	/*
-	if (DECODE_BEGIN <= pem.header && pem.header <= DECODE_END) {
-		while (pd.used < pem.Extra.pos) {
-			PacketFormat unk = {};
-			unk.type = DECODE1;
-			unk.pos = pd.used;
-			unk.size = 1;
-			unk.addr = 0;
-			pd.format.push_back(unk);
-			pd.status = -1;
-			pd.used += unk.size;
-		}
-	}
-	*/
-
 	// パケットロック
 	if (pem.header == DECODE_END) {
 		if (gDebugMode) {
@@ -135,13 +118,15 @@ bool AddFormat(PacketData &pd, PacketEditorMessage &pem) {
 		pd.format.push_back(unk);
 		pd.status = -1;
 		pd.used += unk.size;
-		return false;// test
 	}
 
 
 	if (gDebugMode) {
 		if (DECODE_BEGIN <= pem.header && pem.header <= DECODE_END) {
-			DEBUG(L"Data Added --- " + DWORDtoString(pem.header));
+			DEBUG(L"Data Added (Decode) --- " + DWORDtoString(pem.header));
+		}
+		if (ENCODE_BEGIN <= pem.header && pem.header <= ENCODE_END) {
+			DEBUG(L"Data Added (Encode) --- " + DWORDtoString(pem.header));
 		}
 	}
 
