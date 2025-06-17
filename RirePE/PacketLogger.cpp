@@ -1,4 +1,13 @@
 ﻿#include"../RirePE/MainGUI.h"
+
+bool gDebugMode = false;
+bool gTHMS88Mode = false;
+
+void SetGlobalSettings(PESettings &ps) {
+	gDebugMode = ps.debug_mode;
+	gTHMS88Mode = ps.thms88_mode;
+}
+
 std::vector<PacketData> packet_data_out;
 std::vector<PacketData> packet_data_in;
 
@@ -16,28 +25,39 @@ std::vector<PacketData>& GetInPacketFormat() {
 }
 
 bool AddFormat(PacketData &pd, PacketEditorMessage &pem) {
+	if (gDebugMode && pem.header == RECVPACKET) {
+		DEBUG(L"RECVPACKET - 1");
+	}
 	// パケットロック済み
 	if (pd.lock) {
 		return false;
 	}
+	if (gDebugMode && pem.header == RECVPACKET) {
+		DEBUG(L"RECVPACKET - 2");
+	}
 
 	// パケットの復号検出
-	if (pem.Extra.update == FORMAT_UPDATE) {
-		if (pem.Extra.pos + pem.Extra.size <= pd.packet.size()) {
-			for (auto &pf : pd.format) {
-				if (pf.pos == pem.Extra.pos && pf.size == pem.Extra.size) {
-					for (DWORD i = 0; i < pem.Extra.size; i++) {
-						if (pd.packet[pem.Extra.pos + i] != pem.Extra.data[i]) {
-							pf.modified = true;
-							memcpy_s(&pd.packet[pem.Extra.pos], pem.Extra.size, &pem.Extra.data[0], pem.Extra.size);
-							return true;
+	if (DECODE_BEGIN <= pem.header && pem.header <= DECODE_END) {
+		if (pem.Extra.update == FORMAT_UPDATE) {
+			if (pem.Extra.pos + pem.Extra.size <= pd.packet.size()) {
+				for (auto &pf : pd.format) {
+					if (pf.pos == pem.Extra.pos && pf.size == pem.Extra.size) {
+						for (DWORD i = 0; i < pem.Extra.size; i++) {
+							if (pd.packet[pem.Extra.pos + i] != pem.Extra.data[i]) {
+								pf.modified = true;
+								memcpy_s(&pd.packet[pem.Extra.pos], pem.Extra.size, &pem.Extra.data[0], pem.Extra.size);
+								return true;
+							}
 						}
+						return false;
 					}
-					return false;
 				}
 			}
+			return false;
 		}
-		return false;
+	}
+	if (gDebugMode && pem.header == RECVPACKET) {
+		DEBUG(L"RECVPACKET - 3");
 	}
 
 	// パケットを登録
@@ -72,11 +92,27 @@ bool AddFormat(PacketData &pd, PacketEditorMessage &pem) {
 				pd.status = 1;
 			}
 		}
+
 		return true;
 	}
 
 	// パケットロック
 	if (pem.header == DECODE_END) {
+		if (gDebugMode) {
+			DEBUG(L"DECODE_END");
+		}
+		if (gTHMS88Mode && pd.type == RECVPACKET) {
+			for (DWORD i = pd.used; i < pem.Extra.pos; i++) {
+				PacketFormat unk = {};
+				unk.type = DECODE1; // inlined
+				unk.pos = pd.used;
+				unk.size = 1;
+				unk.addr = 0;
+				pd.format.push_back(unk);
+				pd.used += unk.size;
+			}
+			pd.status = 1;
+		}
 		pd.lock = TRUE;
 		if (pd.used < pd.packet.size()) {
 			PacketFormat unk = {};
@@ -90,18 +126,42 @@ bool AddFormat(PacketData &pd, PacketEditorMessage &pem) {
 		return true;
 	}
 
-	// 正常にdecode or encode出来ていない場合は穴埋めする
+	// not used
 	if (pd.used < pem.Extra.pos) {
-		PacketFormat unk = {};
-		unk.type = UNKNOWNDATA;
-		unk.pos = pd.used;
-		unk.size = pem.Extra.pos - pd.used;
-		unk.addr = 0;
-		pd.format.push_back(unk);
-		pd.status = -1;
-		pd.used += unk.size;
-		return false;
+		// inlined Decode is all Decode1
+		if (gTHMS88Mode && pd.type == RECVPACKET) {
+			for (DWORD i = pd.used; i < pem.Extra.pos; i++) {
+				PacketFormat unk = {};
+				unk.type = DECODE1; // inlined
+				unk.pos = pd.used;
+				unk.size = 1;
+				unk.addr = 0;
+				pd.format.push_back(unk);
+				pd.used += unk.size;
+			}
+		}
+		else {
+			PacketFormat unk = {};
+			unk.type = UNKNOWNDATA;
+			unk.pos = pd.used;
+			unk.size = pem.Extra.pos - pd.used;
+			unk.addr = 0;
+			pd.format.push_back(unk);
+			pd.status = -1;
+			pd.used += unk.size;
+		}
 	}
+
+
+	if (gDebugMode) {
+		if (DECODE_BEGIN <= pem.header && pem.header <= DECODE_END) {
+			DEBUG(L"Data Added (Decode) --- " + DWORDtoString(pem.header));
+		}
+		if (ENCODE_BEGIN <= pem.header && pem.header <= ENCODE_END) {
+			DEBUG(L"Data Added (Encode) --- " + DWORDtoString(pem.header));
+		}
+	}
+
 
 	// フォーマットを登録
 	PacketFormat pf = {};

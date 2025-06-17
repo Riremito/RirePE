@@ -15,6 +15,14 @@
 
 #define PE_DEBUG 1
 
+typedef struct {
+	bool debug_mode;
+	bool thms88_mode;
+	int header_size;
+} PESettings;
+
+// logger -> fix header plz
+void SetGlobalSettings(PESettings &ps);
 
 bool MainGUI(HINSTANCE hInstance);
 Alice& GetMainGUI();
@@ -24,6 +32,8 @@ void SetInfo(std::wstring wText);
 int GetHeaderSize();
 bool SetHeaderSize(int header_size);
 
+int get_target_pid();
+std::wstring& get_target_window_class();
 std::wstring GetPipeNameLogger();
 std::wstring GetPipeNameSender();
 

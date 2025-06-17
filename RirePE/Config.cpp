@@ -1,18 +1,28 @@
 ﻿#include"../RirePE/MainGUI.h"
 
-#ifndef _WIN64
-#define EXE_NAME L"RirePE"
-#else
-#define EXE_NAME L"RirePE64"
-#endif
-
 #define CONF_HEADER_SIZE L"HeaderSize"
 #define CONF_IGNORE_SEND L"IgnoreSend"
 #define CONF_IGNORE_RECV L"IgnoreRecv"
 
+PESettings gSettings = {};
 bool LoadConfig() {
-	Config conf(EXE_NAME".ini");
+	PESettings &ps = gSettings;
+	Config conf(INI_FILE_NAME);
 
+	ps.header_size = 2; // default
+
+	std::wstring wDebugMode;
+	if (conf.Read(EXE_NAME, L"DEBUG_MODE", wDebugMode) && _wtoi(wDebugMode.c_str())) {
+		ps.debug_mode = true;
+	}
+	// inlined Decode1
+	std::wstring wTHMS88Mode;
+	if (conf.Read(EXE_NAME, L"THMS88_MODE", wTHMS88Mode) && _wtoi(wTHMS88Mode.c_str())) {
+		ps.thms88_mode = true;
+	}
+
+	SetGlobalSettings(ps);
+	/*
 	std::wstring wConfig_HeaderSize, wConfig_IgnoreSend, wConfig_IgnoreRecv;
 
 	if (conf.Read(EXE_NAME, CONF_HEADER_SIZE, wConfig_HeaderSize)) {
@@ -27,11 +37,13 @@ bool LoadConfig() {
 	if (conf.Read(EXE_NAME, CONF_IGNORE_RECV, wConfig_IgnoreRecv)) {
 		LoadFilterList(RECVPACKET, IGNORE_PACKET, wConfig_IgnoreRecv);
 	}
+	*/
 	return true;
 }
 
 bool SaveConfig() {
-	Config conf(EXE_NAME".ini");
+	/*
+	Config conf(INI_FILE_NAME);
 
 	std::wstring wConfig_HeaderSize, wConfig_IgnoreSend, wConfig_IgnoreRecv;
 
@@ -43,5 +55,6 @@ bool SaveConfig() {
 
 	conf.Update(EXE_NAME, CONF_IGNORE_SEND, wConfig_IgnoreSend);
 	conf.Update(EXE_NAME, CONF_IGNORE_RECV, wConfig_IgnoreRecv);
+	*/
 	return true;
 }

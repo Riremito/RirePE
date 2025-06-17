@@ -1,4 +1,5 @@
 ﻿#include"../RirePE/MainGUI.h"
+#include"../RirePE/PacketScript.h"
 
 Alice *global_fv = NULL;
 HINSTANCE hFVInstance = NULL;
@@ -23,13 +24,36 @@ bool FVOnCreate(Alice &fv) {
 	fv.ListView_AddHeader(FV_LISTVIEW_FORMAT, L"Enc", 60);
 	fv.ListView_AddHeader(FV_LISTVIEW_FORMAT, L"Data", 300);
 	fv.ListView_AddHeader(FV_LISTVIEW_FORMAT, L"Int", 80);
-	// status
-	fv.TextArea(FV_EDIT_INFO, 3, (FV_HEIGHT / 2), (FV_WIDTH - 6), (FV_HEIGHT / 2 - 6));
-	fv.ReadOnly(FV_EDIT_INFO);
+	// info
+	fv.TextArea(FV_EDIT_INFO, 3, (FV_HEIGHT / 2), (FV_WIDTH - 6), (FV_HEIGHT / 2 - 6) - 20);
+	SendDlgItemMessageW(fv.GetMainHWND(), FV_EDIT_INFO, EM_SETLIMITTEXT, (WPARAM)0x100000, 0);
+	//fv.ReadOnly(FV_EDIT_INFO);
+	fv.Button(FV_SEND, L"Send", (FV_WIDTH - 3) - 210, (FV_HEIGHT - 3) - 20, 100);
+	fv.ChangeState(FV_SEND, false);
+	fv.Button(FV_RECV, L"Recv", (FV_WIDTH - 3) - 100, (FV_HEIGHT - 3) - 20, 100);
 	return true;
 }
 
 bool FVOnCommand(Alice &fv, int nIDDlgItem) {
+	if (nIDDlgItem == FV_SEND) {
+		return true;
+	}
+	if (nIDDlgItem == FV_RECV) {
+		Alice &main_gui = GetMainGUI();
+		std::wstring wText = fv.GetText(FV_EDIT_INFO);
+		RScript rs(wText);
+
+		if (!rs.Parse()) {
+			wText = L"RScript Error!";
+			//main_gui.SetText(EDIT_PACKET_RECV, wText);
+			return false;
+		}
+
+		wText = rs.getRaw();
+		//main_gui.SetText(EDIT_PACKET_RECV, wText);
+		PacketSender(main_gui, RECVPACKET, wText);
+		return true;
+	}
 	return true;
 }
 
@@ -469,7 +493,7 @@ std::wstring GetFormatType_MySrc(PacketData &pd, PacketFormat &pf) {
 	}
 	case ENCODE1:
 	{
-		return L"p.Decode1" + argpart;
+		return L"Decode1" + argpart;
 	}
 	case DECODE1:
 	{
@@ -477,7 +501,7 @@ std::wstring GetFormatType_MySrc(PacketData &pd, PacketFormat &pf) {
 	}
 	case ENCODE2:
 	{
-		return L"p.Decode2" + argpart;
+		return L"Decode2" + argpart;
 	}
 	case DECODE2:
 	{
@@ -485,7 +509,7 @@ std::wstring GetFormatType_MySrc(PacketData &pd, PacketFormat &pf) {
 	}
 	case ENCODE4:
 	{
-		return L"p.Decode4" + argpart;
+		return L"Decode4" + argpart;
 	}
 	case DECODE4:
 	{
@@ -493,7 +517,7 @@ std::wstring GetFormatType_MySrc(PacketData &pd, PacketFormat &pf) {
 	}
 	case ENCODE8:
 	{
-		return L"p.Decode8" + argpart;
+		return L"Decode8" + argpart;
 	}
 	case DECODE8:
 	{
@@ -501,7 +525,7 @@ std::wstring GetFormatType_MySrc(PacketData &pd, PacketFormat &pf) {
 	}
 	case ENCODESTR:
 	{
-		return L"p.DecodeStr" + argpart;
+		return L"DecodeStr" + argpart;
 	}
 	case DECODESTR:
 	{
@@ -509,7 +533,7 @@ std::wstring GetFormatType_MySrc(PacketData &pd, PacketFormat &pf) {
 	}
 	case ENCODEBUFFER:
 	{
-		return L"p.DecodeBuffer" + argpart;
+		return L"DecodeBuffer" + argpart;
 	}
 	case DECODEBUFFER:
 	{

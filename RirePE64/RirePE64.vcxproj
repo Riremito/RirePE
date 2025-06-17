@@ -25,6 +25,7 @@
     <ClInclude Include="..\RirePE\FormatGUI.h" />
     <ClInclude Include="..\RirePE\MainGUI.h" />
     <ClInclude Include="..\RirePE\PacketLogger.h" />
+    <ClInclude Include="..\RirePE\PacketScript.h" />
     <ClInclude Include="..\RirePE\PacketSender.h" />
     <ClInclude Include="..\RirePE\RirePE.h" />
   </ItemGroup>
@@ -34,6 +35,7 @@
     <ClCompile Include="..\RirePE\FormatGUI.cpp" />
     <ClCompile Include="..\RirePE\MainGUI.cpp" />
     <ClCompile Include="..\RirePE\PacketLogger.cpp" />
+    <ClCompile Include="..\RirePE\PacketScript.cpp" />
     <ClCompile Include="..\RirePE\PacketSender.cpp" />
     <ClCompile Include="..\RirePE\WinMain.cpp" />
   </ItemGroup>

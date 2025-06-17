@@ -3,6 +3,20 @@
 
 #include<Windows.h>
 
+#ifndef _WIN64
+#define EXE_NAME L"RirePE"
+#else
+#define EXE_NAME L"RirePE64"
+#endif
+
+#ifndef _WIN64
+#define DLL_NAME L"Packet"
+#else
+#define DLL_NAME L"Packet64"
+#endif
+#define INI_FILE_NAME EXE_NAME".ini"
+
+
 #define PE_LOGGER_PIPE_NAME L"PacketLogger"
 #define PE_SENDER_PIPE_NAME L"PacketSender"
 

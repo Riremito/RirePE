@@ -64,13 +64,21 @@ bool StringtoBYTE(std::wstring wText, std::vector<BYTE> &vData) {
 	return true;
 }
 
-bool PacketSender(Alice &a, MessageHeader type) {
+bool PacketSender(Alice &a, MessageHeader type, std::wstring raw) {
 	PipeClient pc(GetPipeNameSender());
 	if (!pc.Run()) {
 		return false;
 	}
 
-	std::wstring wpacket = a.GetText((type == SENDPACKET) ? EDIT_PACKET_SEND : EDIT_PACKET_RECV);
+	std::wstring wpacket;
+
+	if (raw.length()) {
+		wpacket = raw;
+	}
+	else {
+		wpacket = a.GetText((type == SENDPACKET) ? EDIT_PACKET_SEND : EDIT_PACKET_RECV);
+	}
+
 	std::wstring wpacket_fmt;
 	size_t header_size = (size_t)GetHeaderSize();
 

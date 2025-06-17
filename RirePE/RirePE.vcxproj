@@ -150,6 +150,7 @@
     <ClCompile Include="FormatGUI.cpp" />
     <ClCompile Include="MainGUI.cpp" />
     <ClCompile Include="PacketLogger.cpp" />
+    <ClCompile Include="PacketScript.cpp" />
     <ClCompile Include="PacketSender.cpp" />
     <ClCompile Include="WinMain.cpp" />
   </ItemGroup>
@@ -160,6 +161,7 @@
     <ClInclude Include="FormatGUI.h" />
     <ClInclude Include="MainGUI.h" />
     <ClInclude Include="PacketLogger.h" />
+    <ClInclude Include="PacketScript.h" />
     <ClInclude Include="PacketSender.h" />
     <ClInclude Include="RirePE.h" />
   </ItemGroup>
