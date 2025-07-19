@@ -97,10 +97,6 @@ void AddExtra(PacketExtraInformation &pxi) {
 	pem->Extra.pos = pxi.pos;
 	pem->Extra.size = pxi.size;
 
-	if (pxi.fmt == TV_ENCODEHEADER) {
-		count_up_packet_id_out();
-	}
-
 	if (!gPipeClient->Send(b, sizeof(PacketEditorMessage))) {
 		RestartPipeClient();
 	}

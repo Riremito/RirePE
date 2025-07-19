@@ -27,5 +27,6 @@ void AddRecvPacket(TV_InPacket *p, ULONG_PTR addr, bool &bBlock);
 
 DWORD get_packet_id_in();
 DWORD get_packet_id_out();
+DWORD count_up_packet_id_out();
 
 #endif

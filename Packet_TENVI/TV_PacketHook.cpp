@@ -11,6 +11,7 @@ void (__thiscall *_EncodeStr)(TV_OutPacket *, char *);
 void (__thiscall *_EncodeBuffer)(TV_OutPacket *, BYTE *, DWORD);
 void (__thiscall *_EncodeFloat)(TV_OutPacket *, float);
 void (__thiscall *_EncodeStrW1)(TV_OutPacket *, WCHAR *);
+void (__thiscall *_EncodeStrW2)(TV_OutPacket *, WCHAR *);
 void (__thiscall *_ProcessPacket)(void *, void*, TV_InPacket *, DWORD);
 BYTE (__thiscall *_DecodeHeader)(TV_InPacket *);
 BYTE (__thiscall *_Decode1)(TV_InPacket *);
@@ -35,7 +36,7 @@ void __fastcall SendPacket_Hook(void *ecx, void *edx, TV_OutPacket *oPacket) {
 }
 
 void __fastcall COutPacket_Hook(TV_OutPacket *oPacket, void *edx, BYTE b, void *v) {
-	PacketExtraInformation pxi = { get_packet_id_out(), (ULONG_PTR)_ReturnAddress(), TV_ENCODEHEADER, 0, sizeof(BYTE) };
+	PacketExtraInformation pxi = { count_up_packet_id_out(), (ULONG_PTR)_ReturnAddress(), TV_ENCODEHEADER, 0, sizeof(BYTE) };
 	AddExtra(pxi);
 	return _COutPacket(oPacket, b, v);
 }
@@ -75,20 +76,25 @@ void __fastcall EncodeBuffer_Hook(TV_OutPacket *oPacket, void *edx, BYTE *b, DWO
 
 
 void __fastcall EncodeFloat_Hook(TV_OutPacket *oPacket, void *edx, float f) {
-	PacketExtraInformation pxi = { get_packet_id_out(), (ULONG_PTR)_ReturnAddress(), ENCODE4, oPacket->encoded, sizeof(float) };
+	PacketExtraInformation pxi = { get_packet_id_out(), (ULONG_PTR)_ReturnAddress(), TV_ENCODEFLOAT, oPacket->encoded, sizeof(float) };
 	AddExtra(pxi);
 	return _EncodeFloat(oPacket, f);
 }
 
 void __fastcall EncodeStrW1_Hook(TV_OutPacket *oPacket, void *edx, WCHAR *wc) {
-	BYTE len = 0;
-	while (wc[len] && len < 0xFF) {
-		len++;
-	}
-	PacketExtraInformation pxi = { get_packet_id_out(), (DWORD)_ReturnAddress(), TV_ENCODESTRW1, oPacket->encoded, sizeof(BYTE) + len * sizeof(WORD) };
+	DWORD size = *(DWORD *)((DWORD)wc - 0x0C); // zxstring like
+	PacketExtraInformation pxi = { get_packet_id_out(), (DWORD)_ReturnAddress(), TV_ENCODESTRW1, oPacket->encoded, sizeof(BYTE) + size * sizeof(WORD) };
 	AddExtra(pxi);
 	return _EncodeStrW1(oPacket, wc);
 }
+
+void __fastcall EncodeStrW2_Hook(TV_OutPacket *oPacket, void *edx, WCHAR *wc) {
+	DWORD size = *(DWORD *)((DWORD)wc - 0x0C);
+	PacketExtraInformation pxi = { get_packet_id_out(), (DWORD)_ReturnAddress(), TV_ENCODESTRW2, oPacket->encoded, sizeof(WORD) + size * sizeof(WORD) };
+	AddExtra(pxi);
+	return _EncodeStrW2(oPacket, wc);
+}
+
 void __fastcall ProcessPacket_Hook(void *pCClientSocket, void *edx, void *v1, TV_InPacket *iPacket, DWORD v3) {
 	bool bBlock = false;
 	AddRecvPacket(iPacket, (ULONG_PTR)_ReturnAddress(), bBlock);
@@ -187,23 +193,24 @@ ULONG_PTR getTV_ClientSocketPtr() {
 
 bool PacketHookConf_TV(TenviHookConfig &thc) {
 	Rosemary r;
-	/*
+
 	SHookFunction(SendPacket, thc.uSendPacket);
 	SHookFunction(COutPacket, thc.uOutPacket);
 	SHookFunction(Encode1, thc.uEncode1);
 	SHookFunction(Encode2, thc.uEncode2);
 	SHookFunction(Encode4, thc.uEncode4);
+	SHookFunction(EncodeFloat, thc.uEncodeFloat);
 	SHookFunction(EncodeStrW1, thc.uEncodeStrW1);
-	*/
+	SHookFunction(EncodeStrW2, thc.uEncodeStrW2);
 	SHookFunction(ProcessPacket, thc.uProcessPacket);
 	SHookFunction(DecodeHeader, thc.uDecodeHeader);
 	SHookFunction(Decode1, thc.uDecode1);
 	SHookFunction(Decode2, thc.uDecode2);
 	SHookFunction(Decode4, thc.uDecode4);
-	SHookFunction(DecodeStrW1, thc.uDecodeStrW1);
-	SHookFunction(DecodeStrW2, thc.uDecodeStrW2);
 	SHookFunction(Decode8, thc.uDecode8);
 	SHookFunction(DecodeFloat, thc.uDecodeFloat);
+	SHookFunction(DecodeStrW1, thc.uDecodeStrW1);
+	SHookFunction(DecodeStrW2, thc.uDecodeStrW2);
 
 	gClientSocketBase = thc.uClientSocketBase;
 	gClientSocketOffset = thc.uClientSocketOffset;

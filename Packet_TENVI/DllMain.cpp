@@ -16,7 +16,7 @@ bool InitializeConfig(TenviHookConfig &thc) {
 		thc.uEncode8 = 0;
 		thc.uEncodeFloat = 0x0041414B;
 		thc.uEncodeStrW1 = 0x0040F435;
-		thc.uEncodeStrW2 = 0;
+		thc.uEncodeStrW2 = 0x0049319D;
 		thc.uProcessPacket = 0x0055E557;
 		thc.uDecodeHeader = 0x0055F357;
 		thc.uDecode1 = 0x00402EFE;

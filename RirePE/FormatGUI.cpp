@@ -551,17 +551,29 @@ std::wstring GetFormatType_MySrc(PacketData &pd, PacketFormat &pf) {
 	{
 		return L"EncodeBuffer" + argpart;
 	}
-	case TV_DECODEFLOAT: {
+	case TV_DECODEFLOAT:
+	{
 		return L"EncodeFloat" + argpart;
 	}
-	case TV_ENCODEFLOAT: {
+	case TV_ENCODEFLOAT:
+	{
 		return L"DecodeFloat" + argpart;
 	}
-	case TV_DECODESTRW1: {
+	case TV_DECODESTRW1:
+	{
 		return L"EncodeStrW1" + argpart;
 	}
-	case TV_DECODESTRW2: {
+	case TV_ENCODESTRW1:
+	{
+		return L"DecodeStrW1" + argpart;
+	}
+	case TV_DECODESTRW2:
+	{
 		return L"EncodeStrW2" + argpart;
+	}
+	case TV_ENCODESTRW2:
+	{
+		return L"DecodeStrW2" + argpart;
 	}
 	// エラー処理
 	case NOTUSED: {
