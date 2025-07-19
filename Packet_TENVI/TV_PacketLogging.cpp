@@ -93,13 +93,13 @@ void AddExtra(PacketExtraInformation &pxi) {
 	delete pem;
 }
 
-void AddSendPacket(TV_OutPacket *p, ULONG_PTR addr, bool &bBlock) {
+void AddSendPacket(TV_OutPacket *oPacket, ULONG_PTR addr, bool &bBlock) {
 	union {
 		PacketEditorMessage *pem;
 		BYTE *b;
 	};
 
-	b = new BYTE[sizeof(PacketEditorMessage) + p->encoded];
+	b = new BYTE[sizeof(PacketEditorMessage) + oPacket->encoded];
 
 	if (!b) {
 		return;
@@ -108,10 +108,10 @@ void AddSendPacket(TV_OutPacket *p, ULONG_PTR addr, bool &bBlock) {
 	pem->header = SENDPACKET;
 	pem->id = packet_id_out; // ???
 	pem->addr = addr;
-	pem->Binary.length = p->encoded;
-	memcpy_s(pem->Binary.packet, p->encoded, p->packet, p->encoded);
+	pem->Binary.length = oPacket->encoded;
+	memcpy_s(pem->Binary.packet, oPacket->encoded, oPacket->packet, oPacket->encoded);
 
-	if (!gPipeClient->Send(b, sizeof(PacketEditorMessage) + p->encoded)) {
+	if (!gPipeClient->Send(b, sizeof(PacketEditorMessage) + oPacket->encoded)) {
 		RestartPipeClient();
 	}
 	else {
@@ -128,12 +128,12 @@ void AddSendPacket(TV_OutPacket *p, ULONG_PTR addr, bool &bBlock) {
 	delete[] b;
 }
 
-void AddRecvPacket(TV_InPacket *p, ULONG_PTR addr, bool &bBlock) {
+void AddRecvPacket(TV_InPacket *iPacket, ULONG_PTR addr, bool &bBlock) {
 	union {
 		PacketEditorMessage *pem;
 		BYTE *b;
 	};
-	b = new BYTE[sizeof(PacketEditorMessage) + p->length - 0x04];
+	b = new BYTE[sizeof(PacketEditorMessage) + iPacket->length - 0x04];
 	if (!b) {
 		return;
 	}
@@ -141,9 +141,9 @@ void AddRecvPacket(TV_InPacket *p, ULONG_PTR addr, bool &bBlock) {
 	pem->header = RECVPACKET;
 	pem->id = packet_id_in;
 	pem->addr = addr;
-	pem->Binary.length = p->length - 0x04;
-	memcpy_s(pem->Binary.packet, p->length - 0x04, &p->packet[4], p->length - 0x04);
-	if (!gPipeClient->Send(b, sizeof(PacketEditorMessage) + p->length - 0x04)) {
+	pem->Binary.length = iPacket->length - 0x04;
+	memcpy_s(pem->Binary.packet, iPacket->length - 0x04, &iPacket->packet[4], iPacket->length - 0x04);
+	if (!gPipeClient->Send(b, sizeof(PacketEditorMessage) + iPacket->length - 0x04)) {
 		RestartPipeClient();
 	}
 	else {

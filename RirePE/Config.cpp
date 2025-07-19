@@ -21,15 +21,13 @@ bool LoadConfig() {
 		ps.thms88_mode = true;
 	}
 
-	SetGlobalSettings(ps);
-	/*
 	std::wstring wConfig_HeaderSize, wConfig_IgnoreSend, wConfig_IgnoreRecv;
-
 	if (conf.Read(EXE_NAME, CONF_HEADER_SIZE, wConfig_HeaderSize)) {
 		int header_size = _wtoi(wConfig_HeaderSize.c_str());
 		SetHeaderSize(header_size);
 	}
 
+	/*
 	if (conf.Read(EXE_NAME, CONF_IGNORE_SEND, wConfig_IgnoreSend)) {
 		LoadFilterList(SENDPACKET, IGNORE_PACKET, wConfig_IgnoreSend);
 	}
@@ -38,6 +36,8 @@ bool LoadConfig() {
 		LoadFilterList(RECVPACKET, IGNORE_PACKET, wConfig_IgnoreRecv);
 	}
 	*/
+
+	SetGlobalSettings(ps);
 	return true;
 }
 

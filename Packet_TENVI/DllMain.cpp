@@ -169,8 +169,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
 		DisableThreadLibraryCalls(hinstDLL);
 		LoadPacketConfig(hinstDLL, gthc);
 		InitializeConfig(gthc);
-		//TV_RunRirePE(gthc);
-		//PacketHookConf_TV(gthc);
+		TV_RunRirePE(gthc);
+		PacketHookConf_TV(gthc);
 	}
 	return TRUE;
 }
