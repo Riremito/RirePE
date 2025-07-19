@@ -41,7 +41,7 @@ bool FVOnCommand(Alice &fv, int nIDDlgItem) {
 	if (nIDDlgItem == FV_RECV) {
 		Alice &main_gui = GetMainGUI();
 		std::wstring wText = fv.GetText(FV_EDIT_INFO);
-		RScript rs(wText);
+		RScript rs(wText, GetHeaderSize());
 
 		if (!rs.Parse()) {
 			wText = L"RScript Error!";
@@ -124,8 +124,8 @@ std::wstring GetFormatType(PacketFormat &pf) {
 	switch (pf.type) {
 	case ENCODEHEADER:
 	case DECODEHEADER:
-	case TENVI_ENCODE_HEADER_1:
-	case TENVI_DECODE_HEADER_1:
+	case TV_ENCODEHEADER:
+	case TV_DECODEHEADER:
 	{
 		return L"HEADER";
 	}
@@ -159,16 +159,21 @@ std::wstring GetFormatType(PacketFormat &pf) {
 	{
 		return L"Buffer(" + std::to_wstring(pf.size) + L")";
 	}
-	// TENVI
-	case TENVI_ENCODE_WSTR_1:
-	case TENVI_DECODE_WSTR_1:
+	case TV_ENCODEFLOAT:
+	case TV_DECODEFLOAT:
 	{
-		return L"WStr1(" + std::to_wstring((pf.size - sizeof(BYTE)) / 2) + L")";
+		return L"float";
 	}
-	case TENVI_ENCODE_WSTR_2:
-	case TENVI_DECODE_WSTR_2:
+	// TENVI
+	case TV_ENCODESTRW1:
+	case TV_DECODESTRW1:
 	{
-		return L"WStr2(" + std::to_wstring((pf.size - sizeof(WORD)) / 2) + L")";
+		return L"StrW1(" + std::to_wstring((pf.size - sizeof(BYTE)) / 2) + L")";
+	}
+	case TV_ENCODESTRW2:
+	case TV_DECODESTRW2:
+	{
+		return L"StrW2(" + std::to_wstring((pf.size - sizeof(WORD)) / 2) + L")";
 	}
 	// エラー処理
 	case NOTUSED: {
@@ -225,6 +230,11 @@ bool BYTEtoShiftJIS(BYTE *text, size_t len, std::string &sjis) {
 }
 
 std::wstring GetFormatData(PacketData &pd, PacketFormat &pf) {
+
+	if (pf.size == 0 || 0xFF00 < pf.pos || 0xFF00 < pf.size || (pd.packet.size() - pf.pos) < pf.size) {
+		return L"<ERROR SIZE>";
+	}
+
 	switch (pf.type) {
 	case ENCODEHEADER:
 	case DECODEHEADER:
@@ -243,6 +253,8 @@ std::wstring GetFormatData(PacketData &pd, PacketFormat &pf) {
 	}
 	case ENCODE4:
 	case DECODE4:
+	case TV_ENCODEFLOAT:
+	case TV_DECODEFLOAT:
 	{
 		return DWORDtoString(*(DWORD *)&pd.packet[pf.pos]);
 	}
@@ -268,19 +280,19 @@ std::wstring GetFormatData(PacketData &pd, PacketFormat &pf) {
 		return DatatoString(&pd.packet[pf.pos], pf.size);
 	}
 	// TENVI
-	case TENVI_ENCODE_HEADER_1:
-	case TENVI_DECODE_HEADER_1:
+	case TV_ENCODEHEADER:
+	case TV_DECODEHEADER:
 	{
 		return BYTEtoString(pd.packet[pf.pos]);
 	}
-	case TENVI_ENCODE_WSTR_1:
-	case TENVI_DECODE_WSTR_1:
+	case TV_ENCODESTRW1:
+	case TV_DECODESTRW1:
 	{
 		std::wstring utf16 = std::wstring((WCHAR *)&pd.packet[pf.pos + sizeof(BYTE)], pd.packet[pf.pos]);
 		return L"L\"" + utf16 + L"\"";
 	}
-	case TENVI_ENCODE_WSTR_2:
-	case TENVI_DECODE_WSTR_2:
+	case TV_ENCODESTRW2:
+	case TV_DECODESTRW2:
 	{
 		std::wstring utf16 = std::wstring((WCHAR *)&pd.packet[pf.pos + sizeof(WORD)], *(WORD *)&pd.packet[pf.pos]);
 		return L"L\"" + utf16 + L"\"";
@@ -486,8 +498,8 @@ std::wstring GetFormatType_MySrc(PacketData &pd, PacketFormat &pf) {
 	switch (pf.type) {
 	case ENCODEHEADER:
 	case DECODEHEADER:
-	case TENVI_ENCODE_HEADER_1:
-	case TENVI_DECODE_HEADER_1:
+	case TV_ENCODEHEADER:
+	case TV_DECODEHEADER:
 	{
 		return L"Header" + argpart;
 	}
@@ -539,11 +551,17 @@ std::wstring GetFormatType_MySrc(PacketData &pd, PacketFormat &pf) {
 	{
 		return L"EncodeBuffer" + argpart;
 	}
-	case TENVI_DECODE_WSTR_1: {
-		return L"EncodeWStr1" + argpart;
+	case TV_DECODEFLOAT: {
+		return L"EncodeFloat" + argpart;
 	}
-	case TENVI_DECODE_WSTR_2: {
-		return L"EncodeWStr2" + argpart;
+	case TV_ENCODEFLOAT: {
+		return L"DecodeFloat" + argpart;
+	}
+	case TV_DECODESTRW1: {
+		return L"EncodeStrW1" + argpart;
+	}
+	case TV_DECODESTRW2: {
+		return L"EncodeStrW2" + argpart;
 	}
 	// エラー処理
 	case NOTUSED: {

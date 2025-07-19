@@ -1,7 +1,7 @@
-#include"../Share/Simple/Simple.h"
+﻿#include"../Share/Simple/Simple.h"
 #include"../Share/Hook/SimpleHook.h"
-#include"../RirePE/RirePE.h"
-#include"PacketHook.h"
+#include"TV_PacketHook.h"
+#include"TV_PacketLogging.h"
 
 bool bInjectorCallback = false;
 bool bToBeInject = false;
@@ -15,26 +15,14 @@ VOID CALLBACK PacketInjector(HWND, UINT, UINT_PTR, DWORD) {
 
 	PacketEditorMessage *pcm = (PacketEditorMessage *)&data[0];
 	if (pcm->header == SENDPACKET) {
-		OutPacket tp;
-		COutPacket_Hook(&tp, 0, pcm->Binary.packet[0], 0);
-
-		OutPacket p = { 0x00, &pcm->Binary.packet[0] , 0, 0, 0, pcm->Binary.length};
-		EnterSendPacket_Hook(&p);
+		// not needed for developing server
 	}
 	else {
 		std::vector<BYTE> packet;
 		packet.resize(pcm->Binary.length + 0x04);
-		packet[0] = 0xF7;
-		packet[1] = 0x39;
-		packet[2] = 0xEF;
-		packet[3] = 0x39;
 		memcpy_s(&packet[4], pcm->Binary.length, &pcm->Binary.packet[0], pcm->Binary.length);
-		InPacket p = { 0x00, 0x02, &packet[0], 0x01, 0, 0, (WORD)packet.size(), 0, 0, 0x04 };
-		//packet_id_in++;
-		MyProcessPacket(&p);
-
-
-		//packet_id_in++;
+		TV_InPacket iPacket = { 0x00, 0x02, &packet[0], 0x01, 0, 0, (WORD)packet.size(), 0, 0, 0x04 };
+		ProcessPacket_Hook((void *)getTV_ClientSocketPtr(), 0, 0, &iPacket, 1);
 	}
 }
 
@@ -92,7 +80,7 @@ bool CommunicateThread(PipeServerThread& psh) {
 }
 
 bool PacketSender() {
-	PipeServer ps(PE_SENDER_PIPE_NAME);
+	PipeServer ps(GetPipeNameSender());
 	ps.SetCommunicate(CommunicateThread);
 	return ps.Run();
 }
