@@ -25,4 +25,7 @@ void AddExtra(PacketExtraInformation &pxi);
 void AddSendPacket(TV_OutPacket *p, ULONG_PTR addr, bool &bBlock);
 void AddRecvPacket(TV_InPacket *p, ULONG_PTR addr, bool &bBlock);
 
+DWORD get_packet_id_in();
+DWORD get_packet_id_out();
+
 #endif

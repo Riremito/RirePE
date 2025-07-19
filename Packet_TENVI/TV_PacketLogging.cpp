@@ -1,7 +1,9 @@
 ﻿#include"TV_PacketLogging.h"
 
 PipeClient *gPipeClient = NULL;
-int gTarget_pid = 0;
+int gTarget_pid = 0;// logger
+DWORD g_packet_id_out = 2; // 偶数
+DWORD g_packet_id_in = 1; // 奇数
 
 bool StartPipeClient() {
 	gPipeClient = new PipeClient(GetPipeNameLogger());
@@ -59,13 +61,22 @@ bool TV_RunRirePE(TenviHookConfig &thc) {
 	return true;
 }
 
-// logger
-DWORD packet_id_out = 2; // 偶数
-DWORD packet_id_in = 1; // 奇数
+DWORD count_up_packet_id_in() {
+	g_packet_id_in += 2;
+	return g_packet_id_in;
+}
 
-DWORD CountUpPacketID(DWORD &id) {
-	id += 2;
-	return id;
+DWORD get_packet_id_in() {
+	return g_packet_id_in;
+}
+
+DWORD count_up_packet_id_out() {
+	g_packet_id_out += 2;
+	return g_packet_id_out;
+}
+
+DWORD get_packet_id_out() {
+	return g_packet_id_out;
 }
 
 void AddExtra(PacketExtraInformation &pxi) {
@@ -106,7 +117,7 @@ void AddSendPacket(TV_OutPacket *oPacket, ULONG_PTR addr, bool &bBlock) {
 	}
 
 	pem->header = SENDPACKET;
-	pem->id = packet_id_out; // ???
+	pem->id = count_up_packet_id_out();
 	pem->addr = addr;
 	pem->Binary.length = oPacket->encoded;
 	memcpy_s(pem->Binary.packet, oPacket->encoded, oPacket->packet, oPacket->encoded);
@@ -139,10 +150,13 @@ void AddRecvPacket(TV_InPacket *iPacket, ULONG_PTR addr, bool &bBlock) {
 	}
 
 	pem->header = RECVPACKET;
-	pem->id = packet_id_in;
+	pem->id = count_up_packet_id_in();
 	pem->addr = addr;
 	pem->Binary.length = iPacket->length - 0x04;
 	memcpy_s(pem->Binary.packet, iPacket->length - 0x04, &iPacket->packet[4], iPacket->length - 0x04);
+
+	//DEBUG(std::to_wstring(pem->id) + L" -> " + DatatoString(&iPacket->packet[4], iPacket->length - 4));
+
 	if (!gPipeClient->Send(b, sizeof(PacketEditorMessage) + iPacket->length - 0x04)) {
 		RestartPipeClient();
 	}

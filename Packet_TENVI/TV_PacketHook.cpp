@@ -23,9 +23,6 @@ WCHAR** (__thiscall *_DecodeStrW2)(TV_InPacket *, WCHAR **);
 void (__thiscall *_DecodeBuffer)(TV_InPacket *, BYTE*, DWORD);
 
 
-extern DWORD packet_id_out, packet_id_in;
-
-
 // 先にフォーマット情報は送信される
 void __fastcall SendPacket_Hook(void *ecx, void *edx, TV_OutPacket *oPacket) {
 	bool bBlock = false;
@@ -37,37 +34,34 @@ void __fastcall SendPacket_Hook(void *ecx, void *edx, TV_OutPacket *oPacket) {
 }
 
 void __fastcall COutPacket_Hook(TV_OutPacket *oPacket, void *edx, BYTE b, void *v) {
-	packet_id_out++;
-	PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), TV_ENCODEHEADER, 0, sizeof(BYTE) };
+	PacketExtraInformation pxi = { get_packet_id_out(), (ULONG_PTR)_ReturnAddress(), TV_ENCODEHEADER, 0, sizeof(BYTE) };
 	AddExtra(pxi);
 	return _COutPacket(oPacket, b, v);
 }
 
 void __fastcall Encode1_Hook(TV_OutPacket *oPacket, void *edx, BYTE b) {
 	if (oPacket->encoded) {
-		PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODE1, oPacket->encoded, sizeof(BYTE) };
+		PacketExtraInformation pxi = { get_packet_id_out(), (ULONG_PTR)_ReturnAddress(), ENCODE1, oPacket->encoded, sizeof(BYTE) };
 		AddExtra(pxi);
 	}
 	return _Encode1(oPacket, b);
 }
 
 void __fastcall Encode2_Hook(TV_OutPacket *oPacket, void *edx, WORD w) {
-	if (oPacket->encoded) {
-		PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODE2, oPacket->encoded, sizeof(WORD) };
-		AddExtra(pxi);
-	}
+	PacketExtraInformation pxi = { get_packet_id_out(), (ULONG_PTR)_ReturnAddress(), ENCODE2, oPacket->encoded, sizeof(WORD) };
+	AddExtra(pxi);
 	return _Encode2(oPacket, w);
 
 }
 
 void __fastcall Encode4_Hook(TV_OutPacket *oPacket, void *edx, DWORD dw) {
-	PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODE4, oPacket->encoded, sizeof(DWORD) };
+	PacketExtraInformation pxi = { get_packet_id_out(), (ULONG_PTR)_ReturnAddress(), ENCODE4, oPacket->encoded, sizeof(DWORD) };
 	AddExtra(pxi);
 	return _Encode4(oPacket, dw);
 }
 
 void __fastcall EncodeStr_Hook(TV_OutPacket *oPacket, void *edx, char *s) {
-	PacketExtraInformation pxi = { packet_id_out, (DWORD)_ReturnAddress(), ENCODESTR, oPacket->encoded, sizeof(WORD) + strlen(s) };
+	PacketExtraInformation pxi = { get_packet_id_out(), (DWORD)_ReturnAddress(), ENCODESTR, oPacket->encoded, sizeof(WORD) + strlen(s) };
 	AddExtra(pxi);
 	return _EncodeStr(oPacket, s);
 }
@@ -77,13 +71,13 @@ void __fastcall EncodeStrW1_Hook(TV_OutPacket *oPacket, void *edx, WCHAR *wc) {
 	while (wc[len] && len < 0xFF) {
 		len++;
 	}
-	PacketExtraInformation pxi = { packet_id_out, (DWORD)_ReturnAddress(), TV_ENCODESTRW1, oPacket->encoded, sizeof(BYTE) + len * sizeof(WORD) };
+	PacketExtraInformation pxi = { get_packet_id_out(), (DWORD)_ReturnAddress(), TV_ENCODESTRW1, oPacket->encoded, sizeof(BYTE) + len * sizeof(WORD) };
 	AddExtra(pxi);
 	return _EncodeStrW1(oPacket, wc);
 }
 
 void __fastcall EncodeBuffer_Hook(TV_OutPacket *oPacket, void *edx, BYTE *b, DWORD len) {
-	PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODEBUFFER, oPacket->encoded, len };
+	PacketExtraInformation pxi = { get_packet_id_out(), (ULONG_PTR)_ReturnAddress(), ENCODEBUFFER, oPacket->encoded, len };
 	AddExtra(pxi);
 	return _EncodeBuffer(oPacket, b, len);
 }
@@ -94,78 +88,81 @@ void __fastcall ProcessPacket_Hook(void *pCClientSocket, void *edx, void *v1, TV
 	if (!bBlock) {
 		_ProcessPacket(pCClientSocket, v1, iPacket, v3);
 	}
-	PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)0, DECODE_END, iPacket->decoded - 4, 0 };
+	PacketExtraInformation pxi = { get_packet_id_in(), (ULONG_PTR)0, DECODE_END, iPacket->decoded - 4, 0 };
 	AddExtra(pxi);
 }
 
 WORD __fastcall DecodeHeader_Hook(TV_InPacket *iPacket, void *edx) {
 	if (iPacket->decoded != 0x04) {
-		DEBUG(L"second chance!");
+		//DEBUG(L"S - " + DWORDtoString((DWORD)_ReturnAddress()));
 		// second decoding (same packet)
-		PacketExtraInformation pxi_end = { packet_id_in++, (ULONG_PTR)0, DECODE_END, iPacket->decoded - 4, 0 };
+		PacketExtraInformation pxi_end = { get_packet_id_in(), (ULONG_PTR)0, DECODE_END, iPacket->decoded - 4, 0 };
 		AddExtra(pxi_end);
 		// restart
 		bool bBlock = false;
 		AddRecvPacket(iPacket, (ULONG_PTR)_ReturnAddress(), bBlock); // test
 	}
+	else {
+		//DEBUG(L"F - " + DWORDtoString((DWORD)_ReturnAddress()));
+	}
 
-	PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)_ReturnAddress(), TV_DECODEHEADER, 0, sizeof(BYTE) };
+	PacketExtraInformation pxi = { get_packet_id_in(), (ULONG_PTR)_ReturnAddress(), TV_DECODEHEADER, 0, sizeof(BYTE) };
 	AddExtra(pxi);
 	return _DecodeHeader(iPacket);
 }
 
 BYTE __fastcall Decode1_Hook(TV_InPacket *iPacket, void *edx) {
 	if (iPacket->decoded != 0x04) {
-		PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)_ReturnAddress(), DECODE1, iPacket->decoded - 4, sizeof(BYTE) };
+		PacketExtraInformation pxi = { get_packet_id_in(), (ULONG_PTR)_ReturnAddress(), DECODE1, iPacket->decoded - 4, sizeof(BYTE) };
 		AddExtra(pxi);
 	}
 	return _Decode1(iPacket);
 }
 
 WORD __fastcall Decode2_Hook(TV_InPacket *iPacket, void *edx) {
-		PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)_ReturnAddress(), DECODE2, iPacket->decoded - 4, sizeof(WORD) };
+		PacketExtraInformation pxi = { get_packet_id_in(), (ULONG_PTR)_ReturnAddress(), DECODE2, iPacket->decoded - 4, sizeof(WORD) };
 		AddExtra(pxi);
 	return _Decode2(iPacket);
 }
 
 DWORD __fastcall Decode4_Hook(TV_InPacket *iPacket, void *edx) {
-	PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)_ReturnAddress(), DECODE4, iPacket->decoded - 4, sizeof(DWORD) };
+	PacketExtraInformation pxi = { get_packet_id_in(), (ULONG_PTR)_ReturnAddress(), DECODE4, iPacket->decoded - 4, sizeof(DWORD) };
 	AddExtra(pxi);
 	return _Decode4(iPacket);
 }
 
 char** __fastcall DecodeStr_Hook(TV_InPacket *iPacket, void *edx, char **s) {
-	PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)_ReturnAddress(), DECODESTR, iPacket->decoded - 4, sizeof(WORD) + *(WORD *)&iPacket->packet[iPacket->decoded] };
+	PacketExtraInformation pxi = { get_packet_id_in(), (ULONG_PTR)_ReturnAddress(), DECODESTR, iPacket->decoded - 4, sizeof(WORD) + *(WORD *)&iPacket->packet[iPacket->decoded] };
 	AddExtra(pxi);
 	return _DecodeStr(iPacket, s);
 }
 
 WCHAR** __fastcall DecodeStrW1_Hook(TV_InPacket *iPacket, void *edx, WCHAR **wc) {
-	PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)_ReturnAddress(), TV_DECODESTRW1, iPacket->decoded - 4, sizeof(BYTE) + iPacket->packet[iPacket->decoded] * 2 };
+	PacketExtraInformation pxi = { get_packet_id_in(), (ULONG_PTR)_ReturnAddress(), TV_DECODESTRW1, iPacket->decoded - 4, sizeof(BYTE) + iPacket->packet[iPacket->decoded] * 2 };
 	AddExtra(pxi);
 	return _DecodeStrW1(iPacket, wc);
 }
 
 WCHAR** __fastcall DecodeStrW2_Hook(TV_InPacket *iPacket, void *edx, WCHAR **wc) {
-	PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)_ReturnAddress(), TV_DECODESTRW2, iPacket->decoded - 4, sizeof(WORD) + *(WORD *)&iPacket->packet[iPacket->decoded] * 2 };
+	PacketExtraInformation pxi = { get_packet_id_in(), (ULONG_PTR)_ReturnAddress(), TV_DECODESTRW2, iPacket->decoded - 4, sizeof(WORD) + *(WORD *)&iPacket->packet[iPacket->decoded] * 2 };
 	AddExtra(pxi);
 	return _DecodeStrW2(iPacket, wc);
 }
 
 void __fastcall DecodeBuffer_Hook(TV_InPacket *iPacket, void *edx, BYTE *b, DWORD len) {
-	PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)_ReturnAddress(), DECODEBUFFER, iPacket->decoded - 4, len };
+	PacketExtraInformation pxi = { get_packet_id_in(), (ULONG_PTR)_ReturnAddress(), DECODEBUFFER, iPacket->decoded - 4, len };
 	AddExtra(pxi);
 	return _DecodeBuffer(iPacket, b, len);
 }
 
 ULONGLONG __fastcall Decode8_Hook(TV_InPacket *iPacket) {
-	PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)_ReturnAddress(), DECODE8, iPacket->decoded - 4, sizeof(ULONGLONG) };
+	PacketExtraInformation pxi = { get_packet_id_in(), (ULONG_PTR)_ReturnAddress(), DECODE8, iPacket->decoded - 4, sizeof(ULONGLONG) };
 	AddExtra(pxi);
 	return _Decode8(iPacket);
 }
 
 float __fastcall DecodeFloat_Hook(TV_InPacket *iPacket) {
-	PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)_ReturnAddress(), DECODE4, iPacket->decoded - 4, sizeof(DWORD) };
+	PacketExtraInformation pxi = { get_packet_id_in(), (ULONG_PTR)_ReturnAddress(), DECODE4, iPacket->decoded - 4, sizeof(DWORD) };
 	AddExtra(pxi);
 	return _DecodeFloat(iPacket);
 }

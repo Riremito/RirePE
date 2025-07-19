@@ -225,6 +225,11 @@ bool BYTEtoShiftJIS(BYTE *text, size_t len, std::string &sjis) {
 }
 
 std::wstring GetFormatData(PacketData &pd, PacketFormat &pf) {
+
+	if (pf.size == 0 || 0xFF00 < pf.pos || 0xFF00 < pf.size || (pd.packet.size() - pf.pos) < pf.size) {
+		return L"<ERROR SIZE>";
+	}
+
 	switch (pf.type) {
 	case ENCODEHEADER:
 	case DECODEHEADER:
