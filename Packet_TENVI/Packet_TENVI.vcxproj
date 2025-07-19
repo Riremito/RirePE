@@ -149,11 +149,17 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="DllMain.cpp" />
-    <ClCompile Include="PacketHook.cpp" />
-    <ClCompile Include="PacketSender.cpp" />
+    <ClCompile Include="TV_PacketHook.cpp" />
+    <ClCompile Include="TV_PacketLogging.cpp" />
+    <ClCompile Include="TV_PacketSender.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="PacketHook.h" />
+    <ClInclude Include="TV_PacketHook.h" />
+    <ClInclude Include="TV_PacketLogging.h" />
+    <ClInclude Include="TV_Packet.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\.editorconfig" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
