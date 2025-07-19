@@ -8,19 +8,20 @@ void (__thiscall *_Encode1)(TV_OutPacket *, BYTE);
 void (__thiscall *_Encode2)(TV_OutPacket *, WORD);
 void (__thiscall *_Encode4)(TV_OutPacket *, DWORD);
 void (__thiscall *_EncodeStr)(TV_OutPacket *, char *);
-void (__thiscall *_EncodeStrW1)(TV_OutPacket *, WCHAR *);
 void (__thiscall *_EncodeBuffer)(TV_OutPacket *, BYTE *, DWORD);
+void (__thiscall *_EncodeFloat)(TV_OutPacket *, float);
+void (__thiscall *_EncodeStrW1)(TV_OutPacket *, WCHAR *);
 void (__thiscall *_ProcessPacket)(void *, void*, TV_InPacket *, DWORD);
 BYTE (__thiscall *_DecodeHeader)(TV_InPacket *);
 BYTE (__thiscall *_Decode1)(TV_InPacket *);
 WORD (__thiscall *_Decode2)(TV_InPacket *);
 DWORD (__thiscall *_Decode4)(TV_InPacket *);
 ULONGLONG (__thiscall *_Decode8)(TV_InPacket *);
-float (__thiscall *_DecodeFloat)(TV_InPacket *);
 char** (__thiscall *_DecodeStr)(TV_InPacket *, char **);
+void (__thiscall *_DecodeBuffer)(TV_InPacket *, BYTE*, DWORD);
+float (__thiscall *_DecodeFloat)(TV_InPacket *);
 WCHAR** (__thiscall *_DecodeStrW1)(TV_InPacket *, WCHAR **);
 WCHAR** (__thiscall *_DecodeStrW2)(TV_InPacket *, WCHAR **);
-void (__thiscall *_DecodeBuffer)(TV_InPacket *, BYTE*, DWORD);
 
 
 // 先にフォーマット情報は送信される
@@ -66,6 +67,19 @@ void __fastcall EncodeStr_Hook(TV_OutPacket *oPacket, void *edx, char *s) {
 	return _EncodeStr(oPacket, s);
 }
 
+void __fastcall EncodeBuffer_Hook(TV_OutPacket *oPacket, void *edx, BYTE *b, DWORD len) {
+	PacketExtraInformation pxi = { get_packet_id_out(), (ULONG_PTR)_ReturnAddress(), ENCODEBUFFER, oPacket->encoded, len };
+	AddExtra(pxi);
+	return _EncodeBuffer(oPacket, b, len);
+}
+
+
+void __fastcall EncodeFloat_Hook(TV_OutPacket *oPacket, void *edx, float f) {
+	PacketExtraInformation pxi = { get_packet_id_out(), (ULONG_PTR)_ReturnAddress(), ENCODE4, oPacket->encoded, sizeof(float) };
+	AddExtra(pxi);
+	return _EncodeFloat(oPacket, f);
+}
+
 void __fastcall EncodeStrW1_Hook(TV_OutPacket *oPacket, void *edx, WCHAR *wc) {
 	BYTE len = 0;
 	while (wc[len] && len < 0xFF) {
@@ -75,13 +89,6 @@ void __fastcall EncodeStrW1_Hook(TV_OutPacket *oPacket, void *edx, WCHAR *wc) {
 	AddExtra(pxi);
 	return _EncodeStrW1(oPacket, wc);
 }
-
-void __fastcall EncodeBuffer_Hook(TV_OutPacket *oPacket, void *edx, BYTE *b, DWORD len) {
-	PacketExtraInformation pxi = { get_packet_id_out(), (ULONG_PTR)_ReturnAddress(), ENCODEBUFFER, oPacket->encoded, len };
-	AddExtra(pxi);
-	return _EncodeBuffer(oPacket, b, len);
-}
-
 void __fastcall ProcessPacket_Hook(void *pCClientSocket, void *edx, void *v1, TV_InPacket *iPacket, DWORD v3) {
 	bool bBlock = false;
 	AddRecvPacket(iPacket, (ULONG_PTR)_ReturnAddress(), bBlock);
@@ -131,10 +138,29 @@ DWORD __fastcall Decode4_Hook(TV_InPacket *iPacket, void *edx) {
 	return _Decode4(iPacket);
 }
 
+ULONGLONG __fastcall Decode8_Hook(TV_InPacket *iPacket) {
+	PacketExtraInformation pxi = { get_packet_id_in(), (ULONG_PTR)_ReturnAddress(), DECODE8, iPacket->decoded - 4, sizeof(ULONGLONG) };
+	AddExtra(pxi);
+	return _Decode8(iPacket);
+}
+
+
 char** __fastcall DecodeStr_Hook(TV_InPacket *iPacket, void *edx, char **s) {
 	PacketExtraInformation pxi = { get_packet_id_in(), (ULONG_PTR)_ReturnAddress(), DECODESTR, iPacket->decoded - 4, sizeof(WORD) + *(WORD *)&iPacket->packet[iPacket->decoded] };
 	AddExtra(pxi);
 	return _DecodeStr(iPacket, s);
+}
+
+void __fastcall DecodeBuffer_Hook(TV_InPacket *iPacket, void *edx, BYTE *b, DWORD len) {
+	PacketExtraInformation pxi = { get_packet_id_in(), (ULONG_PTR)_ReturnAddress(), DECODEBUFFER, iPacket->decoded - 4, len };
+	AddExtra(pxi);
+	return _DecodeBuffer(iPacket, b, len);
+}
+
+float __fastcall DecodeFloat_Hook(TV_InPacket *iPacket) {
+	PacketExtraInformation pxi = { get_packet_id_in(), (ULONG_PTR)_ReturnAddress(), TV_DECODEFLOAT, iPacket->decoded - 4, sizeof(float) };
+	AddExtra(pxi);
+	return _DecodeFloat(iPacket);
 }
 
 WCHAR** __fastcall DecodeStrW1_Hook(TV_InPacket *iPacket, void *edx, WCHAR **wc) {
@@ -149,22 +175,14 @@ WCHAR** __fastcall DecodeStrW2_Hook(TV_InPacket *iPacket, void *edx, WCHAR **wc)
 	return _DecodeStrW2(iPacket, wc);
 }
 
-void __fastcall DecodeBuffer_Hook(TV_InPacket *iPacket, void *edx, BYTE *b, DWORD len) {
-	PacketExtraInformation pxi = { get_packet_id_in(), (ULONG_PTR)_ReturnAddress(), DECODEBUFFER, iPacket->decoded - 4, len };
-	AddExtra(pxi);
-	return _DecodeBuffer(iPacket, b, len);
-}
+ULONG_PTR gClientSocketBase = 0;
+ULONG_PTR gClientSocketOffset = 0;
+ULONG_PTR getTV_ClientSocketPtr() {
+	if (!gClientSocketBase || !gClientSocketOffset) {
+		return 0;
+	}
 
-ULONGLONG __fastcall Decode8_Hook(TV_InPacket *iPacket) {
-	PacketExtraInformation pxi = { get_packet_id_in(), (ULONG_PTR)_ReturnAddress(), DECODE8, iPacket->decoded - 4, sizeof(ULONGLONG) };
-	AddExtra(pxi);
-	return _Decode8(iPacket);
-}
-
-float __fastcall DecodeFloat_Hook(TV_InPacket *iPacket) {
-	PacketExtraInformation pxi = { get_packet_id_in(), (ULONG_PTR)_ReturnAddress(), DECODE4, iPacket->decoded - 4, sizeof(DWORD) };
-	AddExtra(pxi);
-	return _DecodeFloat(iPacket);
+	return *(ULONG_PTR *)gClientSocketBase + gClientSocketOffset;
 }
 
 bool PacketHookConf_TV(TenviHookConfig &thc) {
@@ -186,6 +204,10 @@ bool PacketHookConf_TV(TenviHookConfig &thc) {
 	SHookFunction(DecodeStrW2, thc.uDecodeStrW2);
 	SHookFunction(Decode8, thc.uDecode8);
 	SHookFunction(DecodeFloat, thc.uDecodeFloat);
-	//RunPacketSender();
+
+	gClientSocketBase = thc.uClientSocketBase;
+	gClientSocketOffset = thc.uClientSocketOffset;
+
+	RunPacketSender();
 	return true;
 }

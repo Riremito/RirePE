@@ -8,13 +8,13 @@ bool InitializeConfig(TenviHookConfig &thc) {
 	switch (thc.region) {
 	case TENVI_JP:
 	{
-		thc.uSendPacket = 0x0055F2A8;
+		thc.uSendPacket = 0x0055E91B;
 		thc.uOutPacket = 0x0055F36D;
 		thc.uEncode1 = 0x0040F287;
 		thc.uEncode2 = 0x00402FFD;
 		thc.uEncode4 = 0x00403025;
 		thc.uEncode8 = 0;
-		thc.uEncodeFloat = 0;
+		thc.uEncodeFloat = 0x0041414B;
 		thc.uEncodeStrW1 = 0x0040F435;
 		thc.uEncodeStrW2 = 0;
 		thc.uProcessPacket = 0x0055E557;
@@ -26,6 +26,8 @@ bool InitializeConfig(TenviHookConfig &thc) {
 		thc.uDecodeFloat = 0x00402F95;
 		thc.uDecodeStrW1 = 0x0045BBCD;
 		thc.uDecodeStrW2 = 0x0040921A;
+		thc.uClientSocketBase = 0x006DB3B8;
+		thc.uClientSocketOffset = 0x160;
 		return true;
 	}
 	case TENVI_KR:

@@ -34,6 +34,8 @@ typedef struct {
 	ULONG_PTR uDecodeFloat;
 	ULONG_PTR uDecodeStrW1;
 	ULONG_PTR uDecodeStrW2;
+	ULONG_PTR uClientSocketBase;
+	ULONG_PTR uClientSocketOffset;
 } TenviHookConfig;
 
 

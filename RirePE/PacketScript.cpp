@@ -88,10 +88,27 @@ bool ServerPacket::EncodeBuffer(BYTE *val, size_t size) {
 	return true;
 }
 
+bool ServerPacket::EncodeStrW1(std::wstring val) {
+	Encode1((BYTE)val.length());
+	for (size_t i = 0; i < val.length(); i++) {
+		Encode2((WORD)val.at(i));
+	}
+	return true;
+}
+
+bool ServerPacket::EncodeStrW2(std::wstring val) {
+	Encode2((WORD)val.length());
+	for (size_t i = 0; i < val.length(); i++) {
+		Encode2((WORD)val.at(i));
+	}
+	return true;
+}
+
 
 // RScript
-RScript::RScript(std::wstring wScript) {
+RScript::RScript(std::wstring wScript, int hs) {
 	//input = wScript;
+	header_size = hs;
 
 	std::wistringstream MyStream(wScript);
 	std::wstring s;
@@ -114,6 +131,8 @@ enum FORMAT_TYPE {
 	TYPE_ENCODE_8,
 	TYPE_ENCODE_STR,
 	TYPE_ENCODE_BUFFER,
+	TYPE_ENCODE_STRW1,
+	TYPE_ENCODE_STRW2,
 };
 
 bool RScript::DataParse(std::wstring data, ULONGLONG &uData) {
@@ -149,6 +168,12 @@ bool RScript::DataParseFloat(std::wstring data, float &fData) {
 	ULONGLONG uData = 0;
 
 	std::wsmatch match;
+	// hex
+	if (std::regex_search(data, match, std::wregex(LR"(^\s*(0x|@|)([0-9A-Fa-f]+))")) && match.size() >= 2) {
+		swscanf_s(match[2].str().c_str(), L"%llX", &uData);
+		//DEBUG(L"DataParse hex : " + match[2].str());
+		return true;
+	}
 	// int
 	if (std::regex_search(data, match, std::wregex(LR"(^\s*(#-)(\d+))")) && match.size() >= 2) {
 		swscanf_s(match[2].str().c_str(), L"%lld", &uData);
@@ -228,11 +253,18 @@ bool RScript::Parse(std::wstring input) {
 	std::wstring data;
 
 	// LR"(^\s*(Encode1)\s*\(([0-9A-Fa-f]+)\))"
-	if (std::regex_search(input, match, std::wregex(LR"(^\s*(Encode1)\s*\((.*)\))")) && match.size() >= 2) {
+	if (std::regex_search(input, match, std::wregex(LR"(^\s*(Header)\s*\((.*)\))")) && match.size() >= 2) {
+		type = TYPE_ENCODE_2;
+		if (header_size == 1) {
+			type = TYPE_ENCODE_1;
+		}
+		data = match[2];
+	}
+	else if (std::regex_search(input, match, std::wregex(LR"(^\s*(Encode1)\s*\((.*)\))")) && match.size() >= 2) {
 		type = TYPE_ENCODE_1;
 		data = match[2];
 	}
-	else if (std::regex_search(input, match, std::wregex(LR"(^\s*(Header|Encode2)\s*\((.*)\))")) && match.size() >= 2) {
+	else if (std::regex_search(input, match, std::wregex(LR"(^\s*(Encode2)\s*\((.*)\))")) && match.size() >= 2) {
 		type = TYPE_ENCODE_2;
 		data = match[2];
 	}
@@ -254,6 +286,14 @@ bool RScript::Parse(std::wstring input) {
 	}
 	else if (std::regex_search(input, match, std::wregex(LR"(^\s*(EncodeBuffer)\s*\((.*)\))")) && match.size() >= 2) {
 		type = TYPE_ENCODE_BUFFER;
+		data = match[2];
+	}
+	else if (std::regex_search(input, match, std::wregex(LR"(^\s*(EncodeStrW1)\s*\((.*)\))")) && match.size() >= 2) {
+		type = TYPE_ENCODE_STRW1;
+		data = match[2];
+	}
+	else if (std::regex_search(input, match, std::wregex(LR"(^\s*(EncodeStrW2)\s*\((.*)\))")) && match.size() >= 2) {
+		type = TYPE_ENCODE_STRW2;
 		data = match[2];
 	}
 	else {
@@ -288,15 +328,6 @@ bool RScript::Parse(std::wstring input) {
 		sp.Encode4((DWORD)val);
 		return true;
 	}
-	case TYPE_ENCODE_FLOAT:
-	{
-		float val = 0;
-		if (!DataParseFloat(data, val)) {
-			return false;
-		}
-		sp.EncodeFloat(val);
-		return true;
-	}
 	case TYPE_ENCODE_8:
 	{
 		ULONGLONG val = 0;
@@ -319,6 +350,29 @@ bool RScript::Parse(std::wstring input) {
 		sp.EncodeBuffer(&v[0], v.size());
 		return true;
 	}
+	case TYPE_ENCODE_FLOAT:
+	{
+		float val = 0;
+		if (!DataParseFloat(data, val)) {
+			return false;
+		}
+		sp.EncodeFloat(val);
+		return true;
+	}
+	case TYPE_ENCODE_STRW1:
+	{
+		std::wstring val;
+		DataParseStr(data, val);
+		sp.EncodeStrW1(val);
+		return true;
+	}
+	case TYPE_ENCODE_STRW2:
+	{
+		std::wstring val;
+		DataParseStr(data, val);
+		sp.EncodeStrW2(val);
+		return true;
+	}
 	default:
 	{
 		return false;
@@ -332,15 +386,28 @@ bool RScript::Parse(std::wstring input) {
 std::wstring RScript::getRaw() {
 	std::wstring rp;
 
-	if (sp.get().size() < 2) {
+	if (sp.get().size() < header_size) {
 		rp = L"ERROR (too short)";
 		return rp;
 	}
-	// header
-	rp = L"@" + WORDtoString(*(WORD *)&sp.get()[0]);
-	// data
-	if (2 < sp.get().size()) {
-		rp += L" " + DatatoString(&sp.get()[2], sp.get().size() - 2, true);
+
+	switch (header_size) {
+	case 1:
+	{
+		// header
+		rp = L"@" + BYTEtoString(sp.get()[0]);
+		break;
+	}
+	default:
+	{
+		// header
+		rp = L"@" + WORDtoString(*(WORD *)&sp.get()[0]);
+		break;
+	}
+	}
+
+	if (header_size < sp.get().size()) {
+		rp += L" " + DatatoString(&sp.get()[header_size], sp.get().size() - header_size, true);
 	}
 
 	return rp;

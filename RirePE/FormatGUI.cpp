@@ -41,7 +41,7 @@ bool FVOnCommand(Alice &fv, int nIDDlgItem) {
 	if (nIDDlgItem == FV_RECV) {
 		Alice &main_gui = GetMainGUI();
 		std::wstring wText = fv.GetText(FV_EDIT_INFO);
-		RScript rs(wText);
+		RScript rs(wText, GetHeaderSize());
 
 		if (!rs.Parse()) {
 			wText = L"RScript Error!";
@@ -159,6 +159,11 @@ std::wstring GetFormatType(PacketFormat &pf) {
 	{
 		return L"Buffer(" + std::to_wstring(pf.size) + L")";
 	}
+	case TV_ENCODEFLOAT:
+	case TV_DECODEFLOAT:
+	{
+		return L"float";
+	}
 	// TENVI
 	case TV_ENCODESTRW1:
 	case TV_DECODESTRW1:
@@ -248,6 +253,8 @@ std::wstring GetFormatData(PacketData &pd, PacketFormat &pf) {
 	}
 	case ENCODE4:
 	case DECODE4:
+	case TV_ENCODEFLOAT:
+	case TV_DECODEFLOAT:
 	{
 		return DWORDtoString(*(DWORD *)&pd.packet[pf.pos]);
 	}
@@ -543,6 +550,12 @@ std::wstring GetFormatType_MySrc(PacketData &pd, PacketFormat &pf) {
 	case DECODEBUFFER:
 	{
 		return L"EncodeBuffer" + argpart;
+	}
+	case TV_DECODEFLOAT: {
+		return L"EncodeFloat" + argpart;
+	}
+	case TV_ENCODEFLOAT: {
+		return L"DecodeFloat" + argpart;
 	}
 	case TV_DECODESTRW1: {
 		return L"EncodeStrW1" + argpart;

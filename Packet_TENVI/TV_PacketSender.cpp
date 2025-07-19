@@ -1,6 +1,7 @@
 ﻿#include"../Share/Simple/Simple.h"
 #include"../Share/Hook/SimpleHook.h"
 #include"TV_PacketHook.h"
+#include"TV_PacketLogging.h"
 
 bool bInjectorCallback = false;
 bool bToBeInject = false;
@@ -21,7 +22,7 @@ VOID CALLBACK PacketInjector(HWND, UINT, UINT_PTR, DWORD) {
 		packet.resize(pcm->Binary.length + 0x04);
 		memcpy_s(&packet[4], pcm->Binary.length, &pcm->Binary.packet[0], pcm->Binary.length);
 		TV_InPacket iPacket = { 0x00, 0x02, &packet[0], 0x01, 0, 0, (WORD)packet.size(), 0, 0, 0x04 };
-		//MyProcessPacket(&p);
+		ProcessPacket_Hook((void *)getTV_ClientSocketPtr(), 0, 0, &iPacket, 1);
 	}
 }
 
@@ -79,7 +80,7 @@ bool CommunicateThread(PipeServerThread& psh) {
 }
 
 bool PacketSender() {
-	PipeServer ps(PE_SENDER_PIPE_NAME);
+	PipeServer ps(GetPipeNameSender());
 	ps.SetCommunicate(CommunicateThread);
 	return ps.Run();
 }

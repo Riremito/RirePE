@@ -24,6 +24,8 @@ public:
 	void Encode8(ULONGLONG val);
 	bool EncodeStr(std::wstring val);
 	bool EncodeBuffer(BYTE *val, size_t size); // no size header
+	bool EncodeStrW1(std::wstring val);
+	bool EncodeStrW2(std::wstring val);
 };
 
 
@@ -31,6 +33,7 @@ class RScript {
 private:
 	std::vector<std::wstring> src;
 	ServerPacket sp;
+	int header_size;
 
 	bool DataParse(std::wstring data, ULONGLONG &uData);
 	bool DataParseFloat(std::wstring data, float &fData);
@@ -39,7 +42,7 @@ private:
 	bool Parse(std::wstring input);
 
 public:
-	RScript(std::wstring wScript);
+	RScript(std::wstring wScript, int hs);
 	~RScript();
 	std::wstring getRaw(); // GetText
 	bool Parse();

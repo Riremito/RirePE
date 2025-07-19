@@ -40,6 +40,9 @@ bool PacketHookConf_TV(TenviHookConfig &thc);
 bool SetCallBack();
 bool RunPacketSender();
 
+void __fastcall ProcessPacket_Hook(void *pCClientSocket, void *edx, void *v1, TV_InPacket *iPacket, DWORD v3);
+ULONG_PTR getTV_ClientSocketPtr();
+
 
 
 #endif

@@ -48,7 +48,7 @@ bool TV_RunRirePE_Thread(TenviHookConfig &thc) {
 	}
 
 	StartPipeClient();
-	//RunPacketSender();
+	RunPacketSender();
 	return true;
 }
 
@@ -97,6 +97,10 @@ void AddExtra(PacketExtraInformation &pxi) {
 	pem->Extra.pos = pxi.pos;
 	pem->Extra.size = pxi.size;
 
+	if (pxi.fmt == TV_ENCODEHEADER) {
+		count_up_packet_id_out();
+	}
+
 	if (!gPipeClient->Send(b, sizeof(PacketEditorMessage))) {
 		RestartPipeClient();
 	}
@@ -117,7 +121,7 @@ void AddSendPacket(TV_OutPacket *oPacket, ULONG_PTR addr, bool &bBlock) {
 	}
 
 	pem->header = SENDPACKET;
-	pem->id = count_up_packet_id_out();
+	pem->id = get_packet_id_out();
 	pem->addr = addr;
 	pem->Binary.length = oPacket->encoded;
 	memcpy_s(pem->Binary.packet, oPacket->encoded, oPacket->packet, oPacket->encoded);

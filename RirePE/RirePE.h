@@ -37,6 +37,7 @@ enum MessageHeader {
 	TV_ENCODEHEADER,
 	TV_ENCODESTRW1,
 	TV_ENCODESTRW2,
+	TV_ENCODEFLOAT,
 	ENCODE_END,
 	// decode
 	DECODE_BEGIN,
@@ -50,6 +51,7 @@ enum MessageHeader {
 	TV_DECODEHEADER,
 	TV_DECODESTRW1,
 	TV_DECODESTRW2,
+	TV_DECODEFLOAT,
 	DECODE_END, // not a tag
 	// unknown
 	UNKNOWNDATA, // not decoded by function
