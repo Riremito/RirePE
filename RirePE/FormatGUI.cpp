@@ -239,6 +239,10 @@ std::wstring GetFormatData(PacketData &pd, PacketFormat &pf) {
 	case ENCODEHEADER:
 	case DECODEHEADER:
 	{
+		// KMS55
+		if (pf.size == 1) {
+			return L"@" + BYTEtoString(pd.packet[pf.pos]);
+		}
 		return L"@" + WORDtoString(*(WORD *)&pd.packet[pf.pos]);
 	}
 	case ENCODE1:

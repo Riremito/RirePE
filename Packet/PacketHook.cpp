@@ -9,6 +9,7 @@
 
 bool gDebugMode = false;
 bool gHighVersionMode = false;
+bool gHeader1Byte = false;
 
 #ifdef _WIN64
 void(*_SendPacket)(void *rcx, OutPacket *op) = NULL;
@@ -141,11 +142,20 @@ void __fastcall  COutPacket_Hook(OutPacket *op, void *edx, WORD w) {
 }
 
 #ifndef _WIN64
-// v131.0
+// JMS131, KMS55
 void __fastcall  COutPacket_2_Hook(OutPacket *op, void *edx, WORD w, DWORD dw) {
-	PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODEHEADER, 0, sizeof(WORD), 0, (ULONG_PTR)op };
-	ClearQueue(op);
-	AddQueue(pxi);
+	// KMS55
+	if (gHeader1Byte) {
+		PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODEHEADER, 0, sizeof(BYTE), 0, (ULONG_PTR)op };
+		ClearQueue(op);
+		AddQueue(pxi);
+	}
+	// JMS131, KMS65
+	else {
+		PacketExtraInformation pxi = { packet_id_out, (ULONG_PTR)_ReturnAddress(), ENCODEHEADER, 0, sizeof(WORD), 0, (ULONG_PTR)op };
+		ClearQueue(op);
+		AddQueue(pxi);
+	}
 	return _COutPacket_2(op, w, dw);
 }
 
@@ -233,8 +243,6 @@ void __fastcall ProcessPacket_Hook(void *pCClientSocket, void *edx, InPacket *ip
 #endif
 	if (ip->unk2 == 0x02) {
 		CountUpPacketID(packet_id_in);
-		//PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)0, DECODE_BEGIN, 0, ip->size, &ip->packet[ip->decoded] };
-		//AddExtra(pxi);
 		if (gDebugMode) {
 			DEBUG(L"in @" + WORDtoString(*(WORD *)&ip->packet[4]) + L" --- ProcessPacket start");
 		}
@@ -260,14 +268,26 @@ BYTE Decode1_Hook(InPacket *ip) {
 BYTE __fastcall Decode1_Hook(InPacket *ip) {
 #endif
 	if (ip->unk2 == 0x02) {
-		if (gDebugMode) {
-			DEBUG(L"in @" + WORDtoString(*(WORD *)&ip->packet[4]) + L" --- Decode1");
+		if (gHeader1Byte && ip->decoded == 4) {
+			if (gDebugMode) {
+				DEBUG(L"in @" + WORDtoString(*(WORD *)&ip->packet[4]) + L" --- Decode1 (Header)");
+			}
+			PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)_ReturnAddress(), DECODEHEADER, ip->decoded - 4, sizeof(BYTE) };
+			AddExtra(pxi);
+			// update
+			pxi.data = &ip->packet[ip->decoded];
+			AddExtra(pxi);
 		}
-		PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)_ReturnAddress(), DECODE1, ip->decoded - 4, sizeof(BYTE) };
-		AddExtra(pxi);
-		// update
-		pxi.data = &ip->packet[ip->decoded];
-		AddExtra(pxi);
+		else {
+			if (gDebugMode) {
+				DEBUG(L"in @" + WORDtoString(*(WORD *)&ip->packet[4]) + L" --- Decode1");
+			}
+			PacketExtraInformation pxi = { packet_id_in, (ULONG_PTR)_ReturnAddress(), DECODE1, ip->decoded - 4, sizeof(BYTE) };
+			AddExtra(pxi);
+			// update
+			pxi.data = &ip->packet[ip->decoded];
+			AddExtra(pxi);
+		}
 	}
 	return _Decode1(ip);
 }
@@ -278,7 +298,7 @@ WORD Decode2_Hook(InPacket *ip) {
 WORD __fastcall Decode2_Hook(InPacket *ip) {
 #endif
 	if (ip->unk2 == 0x02) {
-		if (ip->decoded == 4) {
+		if (!gHeader1Byte && ip->decoded == 4) {
 			if (gDebugMode) {
 				DEBUG(L"in @" + WORDtoString(*(WORD *)&ip->packet[4]) + L" --- Decode2 (Header)");
 			}
@@ -470,7 +490,7 @@ bool PacketHook_Thread(HookSettings &hs) {
 		_CClientSocket = (decltype(_CClientSocket))uCClientSocket;
 		DEBUG(L"uCClientSocket = " + QWORDtoString(uCClientSocket));
 		SHookFunction(SendPacket_EH, uSendPacket_EH);
-}
+	}
 #else
 	if (uSendPacket) {
 		uEnterSendPacket = r.Scan(AOB_EnterSendPacket[0], ScannerEnterSendPacket);
@@ -512,6 +532,15 @@ bool PacketHook_Thread(HookSettings &hs) {
 	}
 
 	AOBHookWithResult(ProcessPacket);
+#ifndef _WIN64
+	// old version
+	if (!uProcessPacket) {
+		uProcessPacket = r.Scan(AOB_ProcessPacket_KMS55[0]);
+		SHookFunction(ProcessPacket, uProcessPacket);
+		gHeader1Byte = true;
+		DEBUG(L"header 1 byte mode");
+	}
+#endif
 	if (uProcessPacket) {
 		AOBHook(Decode1);
 		AOBHook(Decode2);

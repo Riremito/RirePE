@@ -35,6 +35,12 @@ bool AddFormat(PacketData &pd, PacketEditorMessage &pem) {
 	if (gDebugMode && pem.header == RECVPACKET) {
 		DEBUG(L"RECVPACKET - 2");
 	}
+	if (pem.header == ENCODEHEADER || pem.header == DECODEHEADER) {
+		if (pem.Extra.size != GetHeaderSize()) {
+			DEBUG(L"header size set : " + std::to_wstring(pem.Extra.size));
+			SetHeaderSize(pem.Extra.size);
+		}
+	}
 
 	// パケットの復号検出
 	if (DECODE_BEGIN <= pem.header && pem.header <= DECODE_END) {
