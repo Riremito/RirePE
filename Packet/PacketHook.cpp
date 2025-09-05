@@ -466,9 +466,44 @@ bool PacketHook_Thread(HookSettings &hs) {
 	ULONG_PTR uSendPacket = 0;
 	ULONG_PTR uCClientSocket = 0;
 #endif
-
+	bool isSendPacketVMP = false;
 	AOBHookWithResult(SendPacket);
 #ifndef _WIN64
+	if (!_SendPacket) {
+		size_t unused_index = -1;
+		ULONG_PTR uSendPacket_VMP = r.Scan(AOB_SendPacket_VMP, _countof(AOB_SendPacket_VMP), unused_index);
+		if (uSendPacket_VMP) {
+			SHookFunction(SendPacket, uSendPacket_VMP);
+			ULONG_PTR uAddr22bytes = r.Scan(L"CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC");
+			SCANRES(uAddr22bytes);
+			if (uAddr22bytes) {
+				// reserved 1 bytes for normal break point.
+				uAddr22bytes++; // 17 bytes
+				DWORD old = 0;
+				BYTE *bFakeRetMem = (BYTE *)uAddr22bytes;
+				VirtualProtect(bFakeRetMem, 22, PAGE_EXECUTE_READWRITE, &old);
+				bFakeRetMem[0] = 0xE8;
+				*(DWORD *)(&bFakeRetMem[1]) = uSendPacket_VMP - (DWORD)&bFakeRetMem[0] - 5;
+				// ret 0004 (FakeRet)
+				bFakeRetMem[5] = 0xC2;
+				bFakeRetMem[6] = 0x04;
+				bFakeRetMem[7] = 0x00;
+				// push [esp+04]
+				bFakeRetMem[8] = 0xFF;
+				bFakeRetMem[9] = 0x74;
+				bFakeRetMem[10] = 0x24;
+				bFakeRetMem[11] = 0x04;
+				// push FakeRet
+				bFakeRetMem[12] = 0x68;
+				*(DWORD *)(&bFakeRetMem[13]) = (DWORD)&bFakeRetMem[5];
+				bFakeRetMem[17] = 0xE9;
+				*(DWORD *)(&bFakeRetMem[18]) = (DWORD)*_SendPacket - (DWORD)&bFakeRetMem[17] - 5;
+				VirtualProtect((void *)uAddr22bytes, 22, old, &old);
+				_SendPacket = (decltype(_SendPacket))(DWORD)&bFakeRetMem[8];
+				isSendPacketVMP = true;
+			}
+		}
+	}
 	if (!_SendPacket) {
 		AOBHookWithResult(SendPacket_2);
 	}
@@ -509,7 +544,7 @@ bool PacketHook_Thread(HookSettings &hs) {
 #ifdef _WIN64
 	if (uSendPacket && uSendPacket_EH) {
 #else
-	if (uSendPacket || uSendPacket_2) {
+	if (uSendPacket || uSendPacket_2 || isSendPacketVMP) {
 #endif
 		AOBHook(COutPacket);
 #ifndef _WIN64

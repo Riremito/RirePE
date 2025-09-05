@@ -66,6 +66,14 @@ std::wstring AOB_SendPacket[] = {
 };
 
 
+
+#ifndef _WIN64
+std::wstring AOB_SendPacket_VMP[] = {
+	L"55 8B EC 6A FF 68 ?? ?? ?? ?? 64 A1 00 00 00 00 50 83 EC ?? 53 56 57 A1 ?? ?? ?? ?? 33 C5 50 8D 45 F4 64 A3 00 00 00 00 89 4D ?? 6A 00 E9",
+};
+#endif
+
+
 #ifndef _WIN64
 std::wstring AOB_SendPacket_2[] = {
 	// THMS v87.0
