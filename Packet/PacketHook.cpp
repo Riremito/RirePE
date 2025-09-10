@@ -458,6 +458,50 @@ void SetGlobalSettings(HookSettings &hs) {
 	gHighVersionMode = hs.high_version_mode;
 }
 
+#ifndef _WIN64
+ULONG_PTR gFakeRet = 0; // this should be near SendPacket, lower address does not work.
+bool MakeFakeReturn(Rosemary &r, ULONG_PTR uSendPacket_VMP) {
+	BYTE *bMem = (BYTE *)uSendPacket_VMP;
+	for (int i = 1; i<=7; i++) {
+		if (bMem[0 - i] != 0xCC) {
+			gFakeRet = 0;
+			SCANRES(gFakeRet);
+			return false;
+		}
+	}
+	// reserved 1 bytes for normal break point.
+	BYTE *bFakeRetMem = (BYTE *)(uSendPacket_VMP - 0x07);
+	DWORD old = 0;
+	VirtualProtect(bFakeRetMem, 7, PAGE_EXECUTE_READWRITE, &old);
+	// call SendPacket
+	bFakeRetMem[0] = 0xE8;
+	*(ULONG_PTR *)(&bFakeRetMem[1]) = uSendPacket_VMP - (ULONG_PTR)&bFakeRetMem[0] - 0x05;
+	// nop ret
+	bFakeRetMem[5] = 0x90;
+	bFakeRetMem[6] = 0xC3;
+	VirtualProtect(bFakeRetMem, 7, old, &old);
+	gFakeRet = (ULONG_PTR)&bFakeRetMem[5];
+	SCANRES(gFakeRet);
+	return true;
+}
+
+ULONG_PTR gSendPacketStub = 0;
+void __declspec(naked) SendPacketFR() {
+	__asm {
+		push ebp
+		mov ebp,esp
+		push FR_Ret
+		push dword ptr [ebp+0x08]
+		push dword ptr [gFakeRet]
+		jmp dword ptr [gSendPacketStub]
+		FR_Ret:
+		mov esp,ebp
+		pop ebp
+		ret 0x0004
+	}
+}
+#endif
+
 bool PacketHook_Thread(HookSettings &hs) {
 	SetGlobalSettings(hs);
 	Rosemary r;
@@ -473,33 +517,10 @@ bool PacketHook_Thread(HookSettings &hs) {
 		size_t unused_index = -1;
 		ULONG_PTR uSendPacket_VMP = r.Scan(AOB_SendPacket_VMP, _countof(AOB_SendPacket_VMP), unused_index);
 		if (uSendPacket_VMP) {
-			SHookFunction(SendPacket, uSendPacket_VMP);
-			ULONG_PTR uAddr22bytes = r.Scan(L"CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC");
-			SCANRES(uAddr22bytes);
-			if (uAddr22bytes) {
-				// reserved 1 bytes for normal break point.
-				uAddr22bytes++; // 17 bytes
-				DWORD old = 0;
-				BYTE *bFakeRetMem = (BYTE *)uAddr22bytes;
-				VirtualProtect(bFakeRetMem, 22, PAGE_EXECUTE_READWRITE, &old);
-				bFakeRetMem[0] = 0xE8;
-				*(DWORD *)(&bFakeRetMem[1]) = uSendPacket_VMP - (DWORD)&bFakeRetMem[0] - 5;
-				// ret 0004 (FakeRet)
-				bFakeRetMem[5] = 0xC2;
-				bFakeRetMem[6] = 0x04;
-				bFakeRetMem[7] = 0x00;
-				// push [esp+04]
-				bFakeRetMem[8] = 0xFF;
-				bFakeRetMem[9] = 0x74;
-				bFakeRetMem[10] = 0x24;
-				bFakeRetMem[11] = 0x04;
-				// push FakeRet
-				bFakeRetMem[12] = 0x68;
-				*(DWORD *)(&bFakeRetMem[13]) = (DWORD)&bFakeRetMem[5];
-				bFakeRetMem[17] = 0xE9;
-				*(DWORD *)(&bFakeRetMem[18]) = (DWORD)*_SendPacket - (DWORD)&bFakeRetMem[17] - 5;
-				VirtualProtect((void *)uAddr22bytes, 22, old, &old);
-				_SendPacket = (decltype(_SendPacket))(DWORD)&bFakeRetMem[8];
+			if (MakeFakeReturn(r, uSendPacket_VMP)) {
+				SHookFunction(SendPacket, uSendPacket_VMP);
+				gSendPacketStub = (ULONG_PTR)*_SendPacket;
+				_SendPacket = (decltype(_SendPacket))SendPacketFR;
 				isSendPacketVMP = true;
 			}
 		}

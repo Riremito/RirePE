@@ -104,12 +104,15 @@ typedef struct {
 	BYTE *packet;
 	WORD fullsize; // data length
 	WORD unk5;
+#ifdef GMS126MODE
+	DWORD unk_kms197;
+#endif
 	WORD size; // packet length
 	WORD unk7;
 	DWORD decoded;
 } InPacket;
 
-// KMS197+
+// KMS197+, GMS126+
 typedef struct {
 	DWORD unk1; // 0
 	DWORD unk2; // 0x02
